@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <!-- BepInEx Properties -->
     <PropertyGroup>
         <AssemblyName>fandovec03.NaturalSelectionLib</AssemblyName>
         <Product>NaturalSelectionLib</Product>
         <!-- Change to whatever version you're currently on. -->
-        <Version>1.0.0</Version>
+        <Version>0.1.0</Version>
     </PropertyGroup>
 
     <!-- Project Properties -->
@@ -38,7 +38,21 @@
         viewing Private Information in stack traces.
         -->
         <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+        <Title>Natural Selection Library</Title>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <Description>Personal Library with functions for getting, sorting and filtering enemies</Description>
+        <PackageIcon>NaturalSelectionLibraryIconTemp.png</PackageIcon>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <Authors>Fandovec03</Authors>
+        <RepositoryUrl>https://github.com/Fandovec03/NaturalSelectionLib.git</RepositoryUrl>
     </PropertyGroup>
+    <ItemGroup>
+      <None Include="..\LICENSE">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
+    </ItemGroup>
 
     <!-- Primary Package References -->
     <ItemGroup>
@@ -52,8 +66,14 @@
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
     </ItemGroup>
-
     <ItemGroup>
-      <Folder Include="DLLs\" />
+      <None Update="NaturalSelectionLibraryIconTemp.png">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
+      <None Update="README.md">
+        <Pack>True</Pack>
+        <PackagePath>\</PackagePath>
+      </None>
     </ItemGroup>
 </Project>
