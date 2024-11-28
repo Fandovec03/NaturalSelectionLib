@@ -1,0 +1,7 @@
+{
+  "name": "NaturalSelectionLib",
+  "version_number": "0.1.0",
+  "website_url": "https://github.com/Fandovec03/NaturalSelectionLib",
+  "description": "Personal Library with functions for getting, sorting and filtering enemies",
+  "dependencies": []
+}
