@@ -1,76 +1,66 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BepInEx;
 using BepInEx.Logging;
-using HarmonyLib;
 using UnityEngine;
 
 namespace NaturalSelectionLib
 {
-    [HarmonyPatch(typeof(EnemyAI))]
-    class NaturalSelectionLib
+    [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+    public class NaturalSelectionLib : BaseUnityPlugin
     {
-        static List<EnemyAI> enemyList = new List<EnemyAI>();
-        static float refreshCDtime = 1f;
-        static bool debugUnspecified = false;
-        static bool debugSpam = false;
-        static ManualLogSource Logger;
+        public static List<EnemyAI> enemyList = new List<EnemyAI>();
+        public static bool debugUnspecified = false;
+        public static bool debugSpam = false;
+        public static ManualLogSource Logger;
 
-        public void LibrarySetup(ManualLogSource importLogger, bool spammyLogs = false, bool Unspecified = false)
+        static public void LibrarySetup(ManualLogSource importLogger, bool spammyLogs = false, bool Unspecified = false)
         {
             Logger = importLogger;
             debugSpam = spammyLogs;
             debugUnspecified = Unspecified;
         }
-
-        [HarmonyPatch("Update")]
-        [HarmonyPostfix]
-        static void UpdatePostfixPatch(EnemyAI __instance)
+        static public void enemyListUpdate(EnemyAI __instance, float refreshCDtimer)
         {
-            refreshCDtime -= Time.deltaTime;
-
-            if (refreshCDtime <= 0)
+            foreach (EnemyAI enemy in RoundManager.Instance.SpawnedEnemies)
             {
-                foreach (EnemyAI enemy in RoundManager.Instance.SpawnedEnemies)
+                if (enemyList.Contains(enemy) && enemy.isEnemyDead == false)
                 {
-                    if (enemyList.Contains(enemy) && enemy.isEnemyDead == false)
-                    {
-                        if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(__instance) + "Found Duplicate " + enemy.gameObject.name + ", ID: " + enemy.GetInstanceID());
-                        continue;
-                    }
-                    if (enemyList.Contains(enemy) && enemy.isEnemyDead == true)
-                    {
-                        enemyList.Remove(enemy);
-                        if (debugUnspecified) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(__instance) + "Found and removed dead Enemy " + enemy.gameObject.name + ", ID:  " + enemy.GetInstanceID() + "on List.");
-                        continue;
-                    }
-                    if (!enemyList.Contains(enemy) && enemy.isEnemyDead == false && enemy.name != __instance.name)
-                    {
-                        enemyList.Add(enemy);
-                        if (debugUnspecified) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(__instance) + "Added " + enemy.gameObject.name + " detected in List. Instance: " + enemy.GetInstanceID());
-                        continue;
-                    }
+                    if (debugUnspecified && debugSpam) Logger.LogDebug(DebugStringHead(__instance) + "Found Duplicate " + enemy.gameObject.name + ", ID: " + enemy.GetInstanceID());
+                    continue;
                 }
+                if (enemyList.Contains(enemy) && enemy.isEnemyDead == true)
+                {
+                    enemyList.Remove(enemy);
+                    if (debugUnspecified) Logger.LogDebug(DebugStringHead(__instance) + "Found and removed dead Enemy " + enemy.gameObject.name + ", ID:  " + enemy.GetInstanceID() + "on List.");
+                    continue;
+                }
+                if (!enemyList.Contains(enemy) && enemy.isEnemyDead == false && enemy.name != __instance.name)
+                {
+                    enemyList.Add(enemy);
+                    if (debugUnspecified) Logger.LogDebug(DebugStringHead(__instance) + "Added " + enemy.gameObject.name + " detected in List. Instance: " + enemy.GetInstanceID());
+                    continue;
+                }
+            }
 
-                for (int i = 0; i < enemyList.Count; i++)
+            for (int i = 0; i < enemyList.Count; i++)
+            {
+                if (__instance != null && enemyList.Count > 0)
                 {
-                    if (__instance != null && enemyList.Count > 0)
+                    if (enemyList[i] == null)
                     {
-                        if (enemyList[i] == null)
+                        if (debugUnspecified) Logger.LogError(DebugStringHead(__instance) + "Detected null enemy in the list. Removing...");
+                        enemyList.RemoveAt(i);
+                    }
+                    else if (enemyList[i] != null)
+                    {
+                        if (__instance.CheckLineOfSightForPosition(enemyList[i].transform.position, 360f, 60, 1f, __instance.eye))
                         {
-                            if (debugUnspecified) NaturalSelectionLib.Logger.LogError(DebugStringHead(__instance) + "Detected null enemy in the list. Removing...");
-                            enemyList.RemoveAt(i);
-                        }
-                        else if (enemyList[i] != null)
-                        {
-                            if (__instance.CheckLineOfSightForPosition(enemyList[i].transform.position, 360f, 60, 1f, __instance.eye))
-                            {
-                                if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(__instance) + "LOS check: Have LOS on " + enemyList[i] + ", ID: " + enemyList[i].GetInstanceID());
-                            }
+                            if (debugUnspecified && debugSpam) Logger.LogDebug(DebugStringHead(__instance) + "LOS check: Have LOS on " + enemyList[i] + ", ID: " + enemyList[i].GetInstanceID());
                         }
                     }
                 }
-                refreshCDtime = 1f;
             }
         }
 
@@ -87,13 +77,13 @@ namespace NaturalSelectionLib
             {
                 if (enemyList[i] == instance)
                 {
-                    if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(instance) + " Found itself in the list. Skipping...");
+                    if (debugUnspecified && debugSpam) Logger.LogWarning(DebugStringHead(instance) + " Found itself in the list. Skipping...");
                     //tempList.RemoveAt(i);
                     continue;
                 }
                 if (enemyList[i].GetType() == instance.GetType() && FilterThemselves)
                 {
-                    if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(instance) + " Found its type in the list. Skipping...");
+                    if (debugUnspecified && debugSpam) Logger.LogWarning(DebugStringHead(instance) + " Found its type in the list. Skipping...");
                     //enemyList.RemoveAt(i);
                 }
                 else
@@ -113,7 +103,7 @@ namespace NaturalSelectionLib
                 if (enemy.isOutside && enemy != instance)
                 {
                     outsideEnemies.Add(enemy);
-                    if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(instance) + " Added " + DebugStringHead(enemy) + "...");
+                    if (debugUnspecified && debugSpam) Logger.LogDebug(DebugStringHead(instance) + " Added " + DebugStringHead(enemy) + "...");
                 }
             }
 
@@ -129,7 +119,7 @@ namespace NaturalSelectionLib
                 if (!enemy.isOutside && enemy != instance)
                 {
                     insideEnemies.Add(enemy);
-                    if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(instance) + " Added " + DebugStringHead(enemy) + "...");
+                    if (debugUnspecified && debugSpam) Logger.LogDebug(DebugStringHead(instance) + " Added " + DebugStringHead(enemy) + "...");
                 }
             }
             return insideEnemies;
@@ -141,40 +131,40 @@ namespace NaturalSelectionLib
 
             if (importEnemyList.Count < 1)
             {
-                if (debugUnspecified) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(__instance) + "importEnemyList is empty!");
+                if (debugUnspecified) Logger.LogWarning(DebugStringHead(__instance) + "importEnemyList is empty!");
             }
             else for (int i = 0; i < importEnemyList.Count; i++)
                 {
                     if (importEnemyList.Contains(__instance))
                     {
-                        if (debugUnspecified) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(__instance) + "Found itself in the findClosestEnemy method! Skipping...");
+                        if (debugUnspecified) Logger.LogWarning(DebugStringHead(__instance) + "Found itself in the findClosestEnemy method! Skipping...");
                         //tempEnemyList.Remove(__instance);
                         continue;
                     }
                     if (tempClosestEnemy == null)
                     {
-                        if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogInfo(DebugStringHead(__instance) + "No enemy assigned. Assigning " + importEnemyList[i] + ", ID: " + importEnemyList[i].GetInstanceID() + " as new closestEnemy.");
+                        if (debugUnspecified && debugSpam) Logger.LogInfo(DebugStringHead(__instance) + "No enemy assigned. Assigning " + importEnemyList[i] + ", ID: " + importEnemyList[i].GetInstanceID() + " as new closestEnemy.");
                         tempClosestEnemy = importEnemyList[i];
                         continue;
                     }
                     if (tempClosestEnemy == importEnemyList[i])
                     {
-                        if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(__instance) + importEnemyList[i] + ", ID: " + importEnemyList[i].GetInstanceID() + " is already assigned as closestEnemy");
+                        if (debugUnspecified && debugSpam) Logger.LogWarning(DebugStringHead(__instance) + importEnemyList[i] + ", ID: " + importEnemyList[i].GetInstanceID() + " is already assigned as closestEnemy");
                         continue;
                     }
                     if (importEnemyList[i] == null)
                     {
                         if (debugUnspecified)
                         {
-                            NaturalSelectionLib.Logger.LogError(DebugStringHead(__instance) + "Enemy not found!");
+                            Logger.LogError(DebugStringHead(__instance) + "Enemy not found!");
                         }
                         //importEnemyList.RemoveAt(i);
                     }
                     else if (Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position) < Vector3.Distance(__instance.transform.position, tempClosestEnemy.transform.position))
                     {
                         tempClosestEnemy = importEnemyList[i];
-                        if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogDebug(Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position) < Vector3.Distance(__instance.transform.position, tempClosestEnemy.transform.position));
-                        if (debugUnspecified) NaturalSelectionLib.Logger.LogInfo(DebugStringHead(__instance) + "Assigned " + importEnemyList[i] + ", ID: " + importEnemyList[i].GetInstanceID() + " as new closestEnemy. Distance: " + Vector3.Distance(__instance.transform.position, tempClosestEnemy.transform.position));
+                        if (debugUnspecified && debugSpam) Logger.LogDebug(Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position) < Vector3.Distance(__instance.transform.position, tempClosestEnemy.transform.position));
+                        if (debugUnspecified) Logger.LogInfo(DebugStringHead(__instance) + "Assigned " + importEnemyList[i] + ", ID: " + importEnemyList[i].GetInstanceID() + " as new closestEnemy. Distance: " + Vector3.Distance(__instance.transform.position, tempClosestEnemy.transform.position));
 
                     }
                 }
@@ -188,19 +178,19 @@ namespace NaturalSelectionLib
             {
                 if (importEnemyList[i] == instance)
                 {
-                    if (debugUnspecified) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(instance) + "Found itself in importEnemyList! Skipping...");
+                    if (debugUnspecified) Logger.LogWarning(DebugStringHead(instance) + "Found itself in importEnemyList! Skipping...");
                     //tempEnemyList.RemoveAt(i);
                     continue;
                 }
                 if (inverseToggle == false && targetTypes.Contains(importEnemyList[i].GetType()) || inverseToggle == true && !targetTypes.Contains(importEnemyList[i].GetType()))
                 {
-                    if (debugUnspecified) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(instance) + "Enemy of type " + importEnemyList[i].GetType() + " passed the filter. inverseToggle: " + inverseToggle);
+                    if (debugUnspecified) Logger.LogDebug(DebugStringHead(instance) + "Enemy of type " + importEnemyList[i].GetType() + " passed the filter. inverseToggle: " + inverseToggle);
 
                     filteredList.Add(importEnemyList[i]);
                 }
                 else if (debugUnspecified && debugSpam)
                 {
-                    if (debugUnspecified) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(instance) + "Caught and filtered out Enemy of type " + enemyList[i].GetType());
+                    if (debugUnspecified) Logger.LogWarning(DebugStringHead(instance) + "Caught and filtered out Enemy of type " + enemyList[i].GetType());
                 }
             }
             return filteredList;
@@ -221,7 +211,7 @@ namespace NaturalSelectionLib
             {
                 if (!enemy.isEnemyDead && enemy != null)
                 {
-                    if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogInfo(DebugStringHead(instance) + "/GetEnemiesInLOS/: Added " + enemy + " to tempList");
+                    if (debugUnspecified && debugSpam) Logger.LogInfo(DebugStringHead(instance) + "/GetEnemiesInLOS/: Added " + enemy + " to tempList");
                     tempList.Add(enemy);
                 }
             }
@@ -231,7 +221,7 @@ namespace NaturalSelectionLib
                 {
                     if (tempList[i] == null)
                     {
-                        if (debugUnspecified) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(instance) + "/GetEnemiesInLOS/: Enemy not found! Removing from tempList");
+                        if (debugUnspecified) Logger.LogWarning(DebugStringHead(instance) + "/GetEnemiesInLOS/: Enemy not found! Removing from tempList");
                         tempList.RemoveAt(i);
                         continue;
                     }
@@ -244,11 +234,11 @@ namespace NaturalSelectionLib
                             {
                                 tempDictionary.Add(tempList[i], Vector3.Distance(instance.transform.position, position));
                                 if (debugUnspecified && debugSpam)
-                                    if (debugUnspecified) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(instance) + "/GetEnemiesInLOS/: Added " + tempList[i] + " to tempDictionary");
+                                    if (debugUnspecified) Logger.LogDebug(DebugStringHead(instance) + "/GetEnemiesInLOS/: Added " + tempList[i] + " to tempDictionary");
                             }
                             if (tempDictionary.ContainsKey(tempList[i]) && debugUnspecified && debugSpam)
                             {
-                                if (debugUnspecified) NaturalSelectionLib.Logger.LogWarning(DebugStringHead(instance) + "/GetEnemiesInLOS/:" + tempList[i] + " is already in tempDictionary");
+                                if (debugUnspecified) Logger.LogWarning(DebugStringHead(instance) + "/GetEnemiesInLOS/:" + tempList[i] + " is already in tempDictionary");
                             }
                         }
                     }
@@ -261,19 +251,11 @@ namespace NaturalSelectionLib
                 {
                     foreach (KeyValuePair<EnemyAI, float> enemy in tempDictionary)
                     {
-                        if (debugUnspecified && debugSpam) NaturalSelectionLib.Logger.LogDebug(DebugStringHead(instance) + "/GetEnemiesInLOS/: Final list: " + tempDictionary[enemy.Key]);
+                        if (debugUnspecified && debugSpam) Logger.LogDebug(DebugStringHead(instance) + "/GetEnemiesInLOS/: Final list: " + tempDictionary[enemy.Key]);
                     }
                 }
             }
             return tempDictionary;
-        }
-    }
-    
-    public class ReversePatchEnemy : EnemyAI
-    {
-        public override void Update()
-        {
-            base.Update();
         }
     }
 }
