@@ -68,10 +68,6 @@
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
     </ItemGroup>
     <ItemGroup>
-      <None Update="NaturalSelectionLibraryIconTemp.png">
-        <Pack>True</Pack>
-        <PackagePath>\</PackagePath>
-      </None>
       <None Update="NuGetIcon.png">
         <Pack>True</Pack>
         <PackagePath>\</PackagePath>
