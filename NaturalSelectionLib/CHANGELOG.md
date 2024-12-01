@@ -1,3 +1,8 @@
+0.3.0
+	- Fixed FindClosestEnemy not taking into account if imported closestEnemy is dead or not resulting in the enemies always targeting dead previously targeted enemy.
+	- Added argument controlling if FindClosestEnemy should include dead enemies.
+0.2.4 <br>
+	- Added a bool to GetCompleteList for excluding, including or returning dead enemies in the output.
 0.2.3 <br>
 	- Wrong DLL<br>
 0.2.2 <br>
