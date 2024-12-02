@@ -5,7 +5,7 @@
         <AssemblyName>fandovec03.NaturalSelectionLib</AssemblyName>
         <Product>NaturalSelectionLib</Product>
         <!-- Change to whatever version you're currently on. -->
-        <Version>0.3.0</Version>
+        <Version>0.4.0</Version>
     </PropertyGroup>
 
     <!-- Project Properties -->
@@ -46,7 +46,7 @@
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <Authors>Fandovec03</Authors>
         <RepositoryUrl>https://github.com/Fandovec03/NaturalSelectionLib.git</RepositoryUrl>
-        <PackageReleaseNotes>Fixed critical issue inside findClosestEnemy. See Thunderstore</PackageReleaseNotes>
+        <PackageReleaseNotes>2 Reworks</PackageReleaseNotes>
     </PropertyGroup>
     <ItemGroup>
       <None Include="..\LICENSE">

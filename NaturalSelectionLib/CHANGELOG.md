@@ -1,3 +1,7 @@
+0.4.0 <br>
+	- Removed enemyList.
+	- Removed EnemyListUpdate function.
+	- Reworked GetCompleteList. The function now removes enemies not meeting conditions from a copy of ingame enemy list instead of adding them to a new list when meeting the conditions.
 0.3.0 <br>
 	- Fixed FindClosestEnemy not taking into account if imported closestEnemy is dead or not resulting in the enemies always targeting dead previously targeted enemy.<br>
 	- Added argument controlling if FindClosestEnemy should include dead enemies.<br>

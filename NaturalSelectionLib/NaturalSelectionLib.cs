@@ -11,7 +11,6 @@ namespace NaturalSelectionLib
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     public class NaturalSelectionLib : BaseUnityPlugin
     {
-        public static List<EnemyAI> enemyList = new List<EnemyAI>();
         public static bool debugUnspecified = false;
         public static bool debugSpam = false;
         public static ManualLogSource LibraryLogger = new ManualLogSource("NaturalSelectionLib");
@@ -22,47 +21,6 @@ namespace NaturalSelectionLib
             debugSpam = spammyLogs;
             debugUnspecified = Unspecified;
         }
-        static public void EnemyListUpdate(EnemyAI __instance)
-        {
-            foreach (EnemyAI enemy in RoundManager.Instance.SpawnedEnemies)
-            {
-                if (enemyList.Contains(enemy) && enemy.isEnemyDead == false)
-                {
-                    if (debugUnspecified && debugSpam) LibraryLogger.LogDebug(DebugStringHead(__instance) + "Found Duplicate " + enemy.gameObject.name + ", ID: " + enemy.GetInstanceID());
-                    continue;
-                }
-                if (enemyList.Contains(enemy) && enemy.isEnemyDead == true)
-                {
-                    //enemyList.Remove(enemy);
-                    if (debugUnspecified) LibraryLogger.LogDebug(DebugStringHead(__instance) + "Found and removed dead Enemy " + enemy.gameObject.name + ", ID:  " + enemy.GetInstanceID() + "on List.");
-                    continue;
-                }
-                if (!enemyList.Contains(enemy) && enemy.isEnemyDead == false && enemy.name != __instance.name)
-                {
-                    enemyList.Add(enemy);
-                    if (debugUnspecified) LibraryLogger.LogDebug(DebugStringHead(__instance) + "Added " + enemy.gameObject.name + " detected in List. Instance: " + enemy.GetInstanceID());
-                }
-            }
-
-            for (int i = 0; i < enemyList.Count; i++)
-            {
-                if (__instance != null && enemyList.Count > 0)
-                {
-                    if (enemyList[i] == null)
-                    {
-                        if (debugUnspecified) LibraryLogger.LogError(DebugStringHead(__instance) + "Detected null enemy in the list. Removing...");
-                        enemyList.RemoveAt(i);
-                    }
-                    else if (enemyList[i] != null)
-                    {
-                        if (__instance.CheckLineOfSightForPosition(enemyList[i].transform.position, 360f, 60, 1f, __instance.eye))
-                        {
-                            if (debugUnspecified && debugSpam) LibraryLogger.LogDebug(DebugStringHead(__instance) + "LOS check: Have LOS on " + enemyList[i] + ", ID: " + enemyList[i].GetInstanceID());
-                        }
-                    }
-                }
-            }
-        }
 
         public static string DebugStringHead(EnemyAI? __instance)
         {
@@ -71,30 +29,31 @@ namespace NaturalSelectionLib
         }
         public static List<EnemyAI> GetCompleteList(EnemyAI instance, bool filterThemselves = true, int includeOrReturnTheDead = 0)
         {
-            List<EnemyAI> tempList = new List<EnemyAI>();
+            List<EnemyAI> tempList = RoundManager.Instance.SpawnedEnemies;
 
-            for (int i = 0; i < enemyList.Count; i++)
+            for (int i = 0; i < tempList.Count; i++)
             {
-                if (enemyList[i] == instance)
+                if (tempList[i] == instance)
                 {
-                    if (debugUnspecified && debugSpam) LibraryLogger.LogWarning(DebugStringHead(instance) + " Found itself in the list. Skipping...");
-                    //tempList.RemoveAt(i);
+                    if (debugUnspecified && debugSpam) LibraryLogger.LogWarning(DebugStringHead(instance) + " Found itself in the list. Removing...");
+                    tempList.RemoveAt(i);
                     continue;
                 }
-                if (enemyList[i].GetType() == instance.GetType() && filterThemselves)
+                if (tempList[i].GetType() == instance.GetType() && filterThemselves)
                 {
-                    if (debugUnspecified && debugSpam) LibraryLogger.LogWarning(DebugStringHead(instance) + " Found its type in the list. Skipping...");
-                    //enemyList.RemoveAt(i);
+                    if (debugUnspecified && debugSpam) LibraryLogger.LogWarning(DebugStringHead(instance) + " Found its type in the list. Removing...");
+                    tempList.RemoveAt(i);
                     continue;
                 }
-                if (enemyList[i].isEnemyDead)
+                if (tempList[i].isEnemyDead)
                 {
                     switch (includeOrReturnTheDead)
                     {
                         case 0:
                             {
-                                if (debugUnspecified && debugSpam) LibraryLogger.LogInfo(DebugStringHead(instance) + " Found dead enemy in the list. Skipping...");
-                                continue;
+                                if (debugUnspecified && debugSpam) LibraryLogger.LogInfo(DebugStringHead(instance) + " Found dead enemy in the list. Removing...");
+                                tempList.RemoveAt(i);
+                                continue ;
                             }
                         case 1:
                             {
@@ -103,13 +62,12 @@ namespace NaturalSelectionLib
                             }
                         case 2:
                             {
-                                if (debugUnspecified && debugSpam) LibraryLogger.LogInfo(DebugStringHead(instance) + " Found dead enemy in the list. Adding to Templist..");
-                                tempList.Add(enemyList[i]);
-                                continue;
+                                if (debugUnspecified && debugSpam) LibraryLogger.LogInfo(DebugStringHead(instance) + " Found living enemy in the list. Removing..");
+                                tempList.RemoveAt(i);
+                                continue;;
                             }
                     }
                 }
-                else tempList.Add(enemyList[i]);
             }
             return tempList;
         }
@@ -248,7 +206,7 @@ namespace NaturalSelectionLib
                 }
                 else if (debugUnspecified && debugSpam)
                 {
-                    if (debugUnspecified) LibraryLogger.LogWarning(DebugStringHead(instance) + "Caught and filtered out Enemy of type " + enemyList[i].GetType());
+                    if (debugUnspecified) LibraryLogger.LogWarning(DebugStringHead(instance) + "Caught and filtered out Enemy of type " + importEnemyList[i].GetType());
                 }
             }
             return filteredList;
