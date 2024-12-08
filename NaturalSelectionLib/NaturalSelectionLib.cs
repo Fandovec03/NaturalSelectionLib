@@ -73,7 +73,7 @@ namespace NaturalSelectionLib
                         case 1:
                             {
                                 if (debugUnspecified && debugSpam) LibraryLogger.LogInfo(DebugStringHead(instance) + " Found dead enemy in the list. Proceeding...");
-                                break;
+                                continue;
                             }
                         case 2:
                             {
