@@ -221,11 +221,17 @@ namespace NaturalSelectionLib
                 }
                 else if (targetTypes != null && debugUnspecified && debugSpam)
                 {
-                    if (debugUnspecified) LibraryLogger.LogWarning(DebugStringHead(instance) + "Caught and filtered out Enemy of type " + importEnemyList[i].GetType());
+                    if (debugUnspecified) LibraryLogger.LogInfo(DebugStringHead(instance) + "Caught and filtered out Enemy of type " + importEnemyList[i].GetType());
                 }
                 if (filterOutImmortal && !importEnemyList[i].enemyType.canDie)
                 {
-                    if (debugUnspecified) LibraryLogger.LogWarning(DebugStringHead(instance) + "Caught and filtered out immortal Enemy of type " + importEnemyList[i].GetType());
+                    if (debugUnspecified) LibraryLogger.LogInfo(DebugStringHead(instance) + "Caught and filtered out immortal Enemy of type " + importEnemyList[i].GetType());
+                    continue;
+                }
+                if (targetTypes == null)
+                {
+                    filteredList.Add(importEnemyList[i]);
+                    if (debugUnspecified) LibraryLogger.LogInfo(DebugStringHead(instance) + "TargetTypes is empty.  Added enemy of type " + importEnemyList[i].GetType() + " to filteredList by default");
                 }
             }
             return filteredList;
