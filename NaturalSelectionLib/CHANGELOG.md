@@ -1,6 +1,6 @@
 0.5.0 <br>
 	- Added a dictionary for enemies of the same type to share the same enemy list;
-	- FilterEnemyList when passed null for the targeted enemy types will return back the list.
+	- FilterEnemyList when passed null for the targeted enemy types will not filter the list by enemy types.
 0.4.0 <br>
 	- Removed enemyList.
 	- Removed EnemyListUpdate function.
