@@ -13,7 +13,7 @@ namespace NaturalSelectionLib
         public static bool debugUnspecified = false;
         public static bool debugSpam = false;
         public static ManualLogSource LibraryLogger = new ManualLogSource("NaturalSelectionLib");
-        private static Dictionary<Type, List<EnemyAI>> globalEnemyLists = new Dictionary<Type, List<EnemyAI>>();
+        public static Dictionary<Type, List<EnemyAI>> globalEnemyLists = new Dictionary<Type, List<EnemyAI>>();
 
         static public void UpdateListInsideDictionrary(Type instanceType, List<EnemyAI> list)
         {

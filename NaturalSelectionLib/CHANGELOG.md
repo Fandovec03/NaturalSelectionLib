@@ -1,12 +1,14 @@
+0.5.1 <br>
+	- Publicized globalEnemyList dictionary <br>
 0.5.0 <br>
-	- Added a dictionary for enemies of the same type to share the same enemy list;
-	- FilterEnemyList when passed null for the targeted enemy types will not filter the list by enemy types.
+	- Added a dictionary for enemies of the same type to share the same enemy list <br>
+	- FilterEnemyList when passed null for the targeted enemy types will not filter the list by enemy types <br>
 0.4.0 <br>
-	- Removed enemyList.
-	- Removed EnemyListUpdate function.
-	- Reworked GetCompleteList. The function now removes enemies not meeting conditions from a copy of ingame enemy list instead of adding them to a new list when meeting the conditions.
+	- Removed enemyList. <br>
+	- Removed EnemyListUpdate function <br>
+	- Reworked GetCompleteList. The function now removes enemies not meeting conditions from a copy of ingame enemy list instead of adding them to a new list when meeting the conditions <br>
 0.3.0 <br>
-	- Fixed FindClosestEnemy not taking into account if imported closestEnemy is dead or not resulting in the enemies always targeting dead previously targeted enemy.<br>
+	- Fixed FindClosestEnemy not taking into account if imported closestEnemy is dead or not resulting in the enemies always targeting dead previously targeted enemy<br>
 	- Added argument controlling if FindClosestEnemy should include dead enemies.<br>
 0.2.4 <br>
 	- Added a bool to GetCompleteList for excluding, including or returning dead enemies in the output.<br>
