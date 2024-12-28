@@ -1,3 +1,6 @@
+0.6.0 <br>
+	- Added blacklist to filterEnemyList<br>
+	- - Searches scan node and enemy type to find match and filter out<br>
 0.5.1 <br>
 	- Publicized globalEnemyList dictionary <br>
 0.5.0 <br>

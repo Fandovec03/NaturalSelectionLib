@@ -201,7 +201,7 @@ namespace NaturalSelectionLib
             if (debugUnspecified && debugSpam) LibraryLogger.LogWarning(DebugStringHead(__instance) + "findClosestEnemy returning " + DebugStringHead(tempClosestEnemy));
             return tempClosestEnemy;
         }
-        public static List<EnemyAI> FilterEnemyList(List<EnemyAI> importEnemyList, List<Type>? targetTypes, EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
+        public static List<EnemyAI> FilterEnemyList(List<EnemyAI> importEnemyList, List<Type>? targetTypes, List<string>? blacklist,EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
         {
             List<EnemyAI> filteredList = new List<EnemyAI>();
 
@@ -213,13 +213,19 @@ namespace NaturalSelectionLib
                     //tempEnemyList.RemoveAt(i);
                     continue;
                 }
-                if (targetTypes != null && (inverseToggle == false && targetTypes.Contains(importEnemyList[i].GetType()) || inverseToggle == true && !targetTypes.Contains(importEnemyList[i].GetType())))
+                if (blacklist != null && blacklist.Count > 0 && (blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper()) || blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())))
+                {
+                    if (debugUnspecified && blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
+                    if (debugUnspecified && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
+                    continue;
+                }
+                if (targetTypes != null && targetTypes.Count > 0 && (inverseToggle == false && targetTypes.Contains(importEnemyList[i].GetType()) || inverseToggle == true && !targetTypes.Contains(importEnemyList[i].GetType())))
                 {
                     if (debugUnspecified) LibraryLogger.LogDebug(DebugStringHead(instance) + "Enemy of type " + importEnemyList[i].GetType() + " passed the filter. inverseToggle: " + inverseToggle);
 
                     filteredList.Add(importEnemyList[i]);
                 }
-                else if (targetTypes != null && debugUnspecified && debugSpam)
+                else if (targetTypes != null && targetTypes.Count > 0 && debugUnspecified && debugSpam)
                 {
                     if (debugUnspecified) LibraryLogger.LogInfo(DebugStringHead(instance) + "Caught and filtered out Enemy of type " + importEnemyList[i].GetType());
                 }
@@ -228,10 +234,11 @@ namespace NaturalSelectionLib
                     if (debugUnspecified) LibraryLogger.LogInfo(DebugStringHead(instance) + "Caught and filtered out immortal Enemy of type " + importEnemyList[i].GetType());
                     continue;
                 }
-                if (targetTypes == null)
+                if (targetTypes == null || targetTypes.Count < 1)
                 {
                     filteredList.Add(importEnemyList[i]);
-                    if (debugUnspecified) LibraryLogger.LogInfo(DebugStringHead(instance) + "TargetTypes is empty.  Added enemy of type " + importEnemyList[i].GetType() + " to filteredList by default");
+                    if (debugUnspecified && targetTypes != null && targetTypes.Count < 1) LibraryLogger.LogInfo(DebugStringHead(instance) + "TargetTypes is empty.  Added enemy of type " + importEnemyList[i].GetType() + " to filteredList by default");
+                    if (debugUnspecified && targetTypes == null) LibraryLogger.LogInfo(DebugStringHead(instance) + "TargetTypes is NULL.  Added enemy of type " + importEnemyList[i].GetType() + " to filteredList by default");
                 }
             }
             return filteredList;
