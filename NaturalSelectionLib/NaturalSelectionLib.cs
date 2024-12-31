@@ -40,7 +40,7 @@ namespace NaturalSelectionLib
         public static string DebugStringHead(EnemyAI? __instance)
         {
             if (!__instance) return "Unknown instance: ";
-            else return __instance?.name + ", ID: " + __instance?.GetInstanceID() + ": ";
+            else return __instance?.name + ", local ID: " + __instance?.GetInstanceID() + ", ID: " + __instance?.NetworkObjectId + ":";
         }
         public static List<EnemyAI> GetCompleteList(EnemyAI instance, bool filterThemselves = true, int includeOrReturnTheDead = 0)
         {

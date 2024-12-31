@@ -1,3 +1,5 @@
+0.6.1 <br>
+	- Updated __DebugStringHead__ <br>
 0.6.0 <br>
 	- Added blacklist to filterEnemyList<br>
 	- - Searches scan node and enemy type to find match and filter out<br>
