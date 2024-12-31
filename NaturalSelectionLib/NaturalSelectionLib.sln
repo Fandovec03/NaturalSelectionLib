@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35219.272
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NaturalSelectionLib", "NaturalSelectionLib\NaturalSelectionLib.csproj", "{BB6E8EDD-1875-409A-8CDC-C7DA87B7980C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NaturalSelectionLib", "NaturalSelectionLib.csproj", "{60EE3438-52FF-4F6A-AC6B-23BEA50B90F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BB6E8EDD-1875-409A-8CDC-C7DA87B7980C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BB6E8EDD-1875-409A-8CDC-C7DA87B7980C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BB6E8EDD-1875-409A-8CDC-C7DA87B7980C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BB6E8EDD-1875-409A-8CDC-C7DA87B7980C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60EE3438-52FF-4F6A-AC6B-23BEA50B90F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60EE3438-52FF-4F6A-AC6B-23BEA50B90F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60EE3438-52FF-4F6A-AC6B-23BEA50B90F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60EE3438-52FF-4F6A-AC6B-23BEA50B90F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {CD72B57B-D902-41C0-A7D9-30515640FABD}
+		SolutionGuid = {37336782-D7AA-473C-B492-F82DA7A16675}
 	EndGlobalSection
 EndGlobal
