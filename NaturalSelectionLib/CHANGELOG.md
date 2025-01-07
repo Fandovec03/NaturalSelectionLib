@@ -1,3 +1,5 @@
+0.6.3 <br>
+	- Fixed NRE from FilterEnemyList (Again)
 0.6.2 <br>
 	- Fixed critical issue where GetCompleteList would directly modify RoundManager enemy list instead of making a copy, causing unexpected behavior
 	- Merged GetOutsideEnemyList and GetInsideEnemyList into single method

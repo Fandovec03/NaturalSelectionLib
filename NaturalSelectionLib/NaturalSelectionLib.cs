@@ -196,7 +196,7 @@ namespace NaturalSelectionLib
                     if (debugLibrary) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found itself in importEnemyList! Skipping...");
                     continue;
                 }
-                if (blacklist != null && blacklist.Count > 0 && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper()) || blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())))
+                if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper()) || blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())))
                 {
                     if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
                     if (debugLibrary && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
