@@ -1,3 +1,10 @@
+0.6.2 <br>
+	- Fixed critical issue where GetCompleteList would directly modify RoundManager enemy list instead of making a copy, causing unexpected behavior
+	- Merged GetOutsideEnemyList and GetInsideEnemyList into single method
+	- Fixed NRE from FilterEnemyList
+	- Fixed GetEnemiesInLOS ordering enemies from farthest to nearest
+	- Fixed order of conditions in FindClosestEnemy
+	- Optimized methods and updated logs
 0.6.1 <br>
 	- Updated __DebugStringHead__ <br>
 0.6.0 <br>
