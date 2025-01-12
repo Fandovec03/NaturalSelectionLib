@@ -196,11 +196,23 @@ namespace NaturalSelectionLib
                     if (debugLibrary) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found itself in importEnemyList! Skipping...");
                     continue;
                 }
-                if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper()) || blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())))
+                try
                 {
-                    if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
-                    if (debugLibrary && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
-                    continue;
+                    if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper()) || blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())))
+                    {
+                        if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
+                        if (debugLibrary && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
+                        continue;
+                    }
+                }
+                catch (Exception exc)
+                {
+                    LibraryLogger.LogError(DebugStringHead(instance) + "Something went wrong.");
+                    LibraryLogger.LogError(blacklist);
+                    LibraryLogger.LogError(importEnemyList[i]);
+                    LibraryLogger.LogError(importEnemyList[i].enemyType.enemyName.ToUpper());
+                    LibraryLogger.LogError(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper());
+                    LibraryLogger.LogError(exc.ToString());
                 }
                 if (filterOutImmortal && !importEnemyList[i].enemyType.canDie)
                 {
