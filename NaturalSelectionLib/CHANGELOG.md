@@ -1,3 +1,7 @@
+0.6.5<br>
+	- Fixed NRE from filterEnemyList
+	- Simplified DebugStringHead
+
 0.6.4 <br>
 	- Updated fliterEnemyList<br>
 

@@ -40,7 +40,7 @@ namespace NaturalSelectionLib
         public static string DebugStringHead(EnemyAI? __instance)
         {
             if (!__instance) return "Unknown instance: ";
-            else return __instance?.name + ", local ID: " + __instance?.GetInstanceID() + ", ID: " + __instance?.NetworkObjectId + ":";
+            else return __instance?.name + " ID: " + __instance?.NetworkObjectId + ": ";
         }
         public static List<EnemyAI> GetCompleteList(EnemyAI instance, bool filterThemselves = true, int includeOrReturnTheDead = 0)
         {
@@ -198,7 +198,7 @@ namespace NaturalSelectionLib
                 }
                 try
                 {
-                    if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper()) || blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())))
+                    if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper()) || importEnemyList[i].GetComponentInChildren<ScanNodeProperties>() != null && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())))
                     {
                         if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
                         if (debugLibrary && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())) LibraryLogger.LogWarning(DebugStringHead(instance) + "Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
