@@ -4,6 +4,7 @@
 
 ##### Internal
 - Updated strings to use interpolation
+
 ### 0.6.5
 - Fixed NRE from filterEnemyList
 - Simplified DebugStringHead
