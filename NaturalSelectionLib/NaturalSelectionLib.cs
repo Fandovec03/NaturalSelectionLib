@@ -15,6 +15,11 @@ namespace NaturalSelectionLib
         public static ManualLogSource LibraryLogger = new ManualLogSource("NaturalSelectionLib");
         public static Dictionary<Type, List<EnemyAI>> globalEnemyLists = new Dictionary<Type, List<EnemyAI>>();
 
+        public static string ReturnVersion()
+        {
+            return MyPluginInfo.PLUGIN_VERSION;
+        }
+
         static public void UpdateListInsideDictionrary(Type instanceType, List<EnemyAI> list)
         {
             List<Type> enemyTypes = new List<Type>();
@@ -40,7 +45,7 @@ namespace NaturalSelectionLib
         public static string DebugStringHead(EnemyAI? __instance)
         {
             if (!__instance) return "Unknown instance: ";
-            else return $"({__instance?.name}|ID: {__instance?.NetworkObjectId}|LocalID: {__instance?.GetInstanceID()}) ";
+            else return $"({__instance?.name}|ID: {__instance?.NetworkObjectId}|LocalID: {__instance?.GetInstanceID()}|ThisEnemyIndex: {__instance?.thisEnemyIndex}) ";
         }
         public static List<EnemyAI> GetCompleteList(EnemyAI instance, bool filterThemselves = true, int includeOrReturnTheDead = 0)
         {
