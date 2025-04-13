@@ -1,3 +1,11 @@
+## 0.6.7
+
+### FilterEnemyList
+- No longer turns blacklist entry names to upper case
+
+### DebugStringHead
+- Added bool parameter to return shortened string
+
 ### 0.6.6
 - Updated CHANGELOG format
 - Updated DebugStringHead

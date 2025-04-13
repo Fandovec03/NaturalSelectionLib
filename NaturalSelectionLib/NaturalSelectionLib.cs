@@ -45,7 +45,9 @@ namespace NaturalSelectionLib
         public static string DebugStringHead(EnemyAI? __instance)
         {
             if (!__instance) return "Unknown instance: ";
-            else return $"({__instance?.name}|ID: {__instance?.NetworkObjectId}|LocalID: {__instance?.GetInstanceID()}|ThisEnemyIndex: {__instance?.thisEnemyIndex}) ";
+            string FinalString = $"({__instance?.enemyType.enemyName}|ID: {__instance?.NetworkObjectId}|LocalID: {__instance?.GetInstanceID()}|ThisEnemyIndex: {__instance?.thisEnemyIndex}) ";
+            if (shortFormat) FinalString  = $"({__instance?.enemyType.enemyName}|ID: {__instance?.NetworkObjectId}) ";
+            return FinalString;
         }
         public static List<EnemyAI> GetCompleteList(EnemyAI instance, bool filterThemselves = true, int includeOrReturnTheDead = 0)
         {
@@ -115,7 +117,6 @@ namespace NaturalSelectionLib
                 if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(__instance)}/FindClosestEnemy/ item {DebugStringHead(enemy)} inside importEnemyList. IsEnemyDead: {enemy.isEnemyDead}");
             }
             if (debugLibrary && importClosestEnemy != null) LibraryLogger.LogInfo($"{DebugStringHead(__instance)}/FindClosestEnemy/ {DebugStringHead(importClosestEnemy)} inside importClosestEnemy. IsEnemyDead: {importClosestEnemy.isEnemyDead}");
-            //if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(__instance)}/FindClosestEnemy/ {DebugStringHead(__instance)} inside instance.");
             if (importEnemyList.Count < 1)
             {
                 if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(__instance)}importEnemyList is empty!");
@@ -177,7 +178,6 @@ namespace NaturalSelectionLib
                 {
                     if (debugLibrary) LibraryLogger.LogError($"{DebugStringHead(__instance)} Enemy not found! Skipping...");
                     continue;
-                    //importEnemyList.RemoveAt(i);
                 }
                 if (Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position) < Vector3.Distance(__instance.transform.position, importClosestEnemy.transform.position))
                 {
@@ -203,7 +203,7 @@ namespace NaturalSelectionLib
                 }
                 try
                 {
-                    if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper()) || blacklist.Contains(importEnemyList[i].enemyType.name.ToUpper()) || importEnemyList[i].GetComponentInChildren<ScanNodeProperties>() != null && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())))
+                    if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName) || blacklist.Contains(importEnemyList[i].enemyType.name) || importEnemyList[i].GetComponentInChildren<ScanNodeProperties>() != null && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText)))
                     {
                         if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper())) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType enemyName! Skipping...");
                         if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.name.ToUpper())) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
