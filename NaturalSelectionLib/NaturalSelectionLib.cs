@@ -42,7 +42,7 @@ namespace NaturalSelectionLib
             debugLibrary = debuglibrary;
         }
 
-        public static string DebugStringHead(EnemyAI? __instance)
+        public static string DebugStringHead(EnemyAI? __instance, bool shortFormat = true)
         {
             if (!__instance) return "Unknown instance: ";
             string FinalString = $"({__instance?.enemyType.enemyName}|ID: {__instance?.NetworkObjectId}|LocalID: {__instance?.GetInstanceID()}|ThisEnemyIndex: {__instance?.thisEnemyIndex}) ";
