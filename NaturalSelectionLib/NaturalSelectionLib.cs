@@ -20,20 +20,18 @@ namespace NaturalSelectionLib
             return MyPluginInfo.PLUGIN_VERSION;
         }
 
-        static public void UpdateListInsideDictionrary(Type instanceType, List<EnemyAI> list)
+        public static void UpdateListInsideDictionrary(Type instanceType, List<EnemyAI> list)
         {
-            List<Type> enemyTypes = new List<Type>();
             if (!globalEnemyLists.ContainsKey(instanceType))
             {
-                globalEnemyLists.Add(instanceType, new List<EnemyAI>(list));
+                globalEnemyLists.Add(instanceType, list);
                 if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ created new list for " + instanceType);
             }
             else
             {
-                globalEnemyLists[instanceType] = new List<EnemyAI>(list);
+                globalEnemyLists[instanceType] = list;
                 if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ updating list for " + instanceType);
             }
-            if (!enemyTypes.Contains(instanceType)) enemyTypes.Add(instanceType);
         }
         static public void LibrarySetup(ManualLogSource importLogger, bool spammyLogs = false, bool debuglibrary = false)
         {
@@ -94,20 +92,17 @@ namespace NaturalSelectionLib
             return tempList;
         }
 
-        
         public static List<EnemyAI> GetInsideOrOutsideEnemyList(List<EnemyAI> importEnemyList, EnemyAI instance)
         {
-            List<EnemyAI> tempEnemyList = new List<EnemyAI>();
-
-            foreach (EnemyAI enemy in importEnemyList)
+            foreach (EnemyAI enemy in importEnemyList.ToList())
             {
-                if (enemy != instance && (enemy.isOutside && instance.isOutside || !enemy.isOutside && !instance.isOutside))
+                if (enemy == instance || (enemy.isOutside != instance.isOutside))
                 {
-                    tempEnemyList.Add(enemy);
+                    importEnemyList.Remove(enemy);
                     if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)}/GetInsideOrOutsideEnemyList/ addded {DebugStringHead(enemy)}");
                 }
             }
-            return tempEnemyList;
+            return importEnemyList;
         }
 
         public static EnemyAI? FindClosestEnemy(List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool includeTheDead = false)
@@ -192,22 +187,23 @@ namespace NaturalSelectionLib
         }
         public static List<EnemyAI> FilterEnemyList(List<EnemyAI> importEnemyList, List<Type>? targetTypes, List<string>? blacklist,EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
         {
-            List<EnemyAI> filteredList = new List<EnemyAI>();
-
-            for (int i = 0; i < importEnemyList.Count; i++)
+            List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
+            for (int i = 0; i < tempList.Count; i++)
             {
-                if (importEnemyList[i] == instance)
+                if (tempList[i] == instance)
                 {
                     if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found itself in importEnemyList! Skipping...");
+                    importEnemyList.Remove(tempList[i]);
                     continue;
                 }
                 try
                 {
-                    if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName) || blacklist.Contains(importEnemyList[i].enemyType.name) || importEnemyList[i].GetComponentInChildren<ScanNodeProperties>() != null && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText)))
+                    if (blacklist != null && tempList[i] != null && (blacklist.Contains(tempList[i].enemyType.enemyName) || blacklist.Contains(tempList[i].enemyType.name) || tempList[i].GetComponentInChildren<ScanNodeProperties>() != null && blacklist.Contains(tempList[i].GetComponentInChildren<ScanNodeProperties>().headerText)))
                     {
-                        if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.enemyName)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType enemyName! Skipping...");
-                        if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.name)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
-                        if (debugLibrary && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
+                        if (debugLibrary && blacklist.Contains(tempList[i].enemyType.enemyName)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType enemyName! Skipping...");
+                        if (debugLibrary && blacklist.Contains(tempList[i].enemyType.name)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
+                        if (debugLibrary && blacklist.Contains(tempList[i].GetComponentInChildren<ScanNodeProperties>().headerText)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
+                        importEnemyList.Remove(tempList[i]);
                         continue;
                     }
                 }
@@ -215,35 +211,37 @@ namespace NaturalSelectionLib
                 {
                     LibraryLogger.LogError($"{DebugStringHead(instance)} Something went wrong.");
                     LibraryLogger.LogError(blacklist);
-                    LibraryLogger.LogError(importEnemyList[i]);
-                    LibraryLogger.LogError(importEnemyList[i].enemyType.enemyName.ToUpper());
-                    LibraryLogger.LogError(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper());
+                    LibraryLogger.LogError(tempList[i]);
+                    LibraryLogger.LogError(tempList[i].enemyType.enemyName.ToUpper());
+                    LibraryLogger.LogError(tempList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper());
                     LibraryLogger.LogError(exc.ToString());
                 }
-                if (filterOutImmortal && !importEnemyList[i].enemyType.canDie)
+                if (filterOutImmortal && !tempList[i].enemyType.canDie)
                 {
-                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out immortal Enemy of type {importEnemyList[i].GetType()}");
+                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out immortal Enemy of type {tempList[i].GetType()}");
+                    importEnemyList.Remove(tempList[i]);
                     continue;
                 }
 
-                if (targetTypes != null && targetTypes.Count > 0 && (inverseToggle == false && targetTypes.Contains(importEnemyList[i].GetType()) || inverseToggle == true && !targetTypes.Contains(importEnemyList[i].GetType())))
+                if (targetTypes != null && targetTypes.Count > 0 && (inverseToggle == false && targetTypes.Contains(tempList[i].GetType()) || inverseToggle == true && !targetTypes.Contains(tempList[i].GetType())))
                 {
-                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of type {importEnemyList[i].GetType()} passed the filter. inverseToggle: {inverseToggle}");
-                    filteredList.Add(importEnemyList[i]);
+                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of type {tempList[i].GetType()} passed the filter. inverseToggle: {inverseToggle}");
+                    //filteredList.Add(importEnemyList[i]);
                 }
                 else if (targetTypes != null && targetTypes.Count > 0)
                 {
-                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of type {importEnemyList[i].GetType()}");
+                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of type {tempList[i].GetType()}");
+                    importEnemyList.Remove(tempList[i]);
                     continue;
                 }
                 if (targetTypes == null || targetTypes.Count < 1)
                 {
-                    if (debugLibrary && targetTypes != null && targetTypes.Count < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} TargetTypes is empty. Adding enemy of type {importEnemyList[i].GetType()} by default");
-                    if (debugLibrary && targetTypes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} TargetTypes is NULL. Adding enemy of type {importEnemyList[i].GetType()} by default");
-                    filteredList.Add(importEnemyList[i]);
+                    if (debugLibrary && targetTypes != null && targetTypes.Count < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} TargetTypes is empty. Adding enemy of type {tempList[i].GetType()} by default");
+                    if (debugLibrary && targetTypes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} TargetTypes is NULL. Adding enemy of type {tempList[i].GetType()} by default");
+                    //filteredList.Add(importEnemyList[i]);
                 }
             }
-            return filteredList;
+            return importEnemyList;
         }
 
 
@@ -264,7 +262,7 @@ namespace NaturalSelectionLib
                     if (tempList[i] == null)
                     {
                         if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Enemy not found! Removing from tempList");
-                        tempList.Remove(tempList[i]);
+                        importEnemyList.Remove(tempList[i]);
                         continue;
                     }
                     Vector3 position = tempList[i].transform.position;
