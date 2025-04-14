@@ -205,9 +205,9 @@ namespace NaturalSelectionLib
                 {
                     if (blacklist != null && importEnemyList[i] != null && (blacklist.Contains(importEnemyList[i].enemyType.enemyName) || blacklist.Contains(importEnemyList[i].enemyType.name) || importEnemyList[i].GetComponentInChildren<ScanNodeProperties>() != null && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText)))
                     {
-                        if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.enemyName.ToUpper())) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType enemyName! Skipping...");
-                        if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.name.ToUpper())) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
-                        if (debugLibrary && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText.ToUpper())) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
+                        if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.enemyName)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType enemyName! Skipping...");
+                        if (debugLibrary && blacklist.Contains(importEnemyList[i].enemyType.name)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by EnemyType name! Skipping...");
+                        if (debugLibrary && blacklist.Contains(importEnemyList[i].GetComponentInChildren<ScanNodeProperties>().headerText)) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found blacklisted enemy in importEnemyList by scan node headertext! Skipping...");
                         continue;
                     }
                 }
