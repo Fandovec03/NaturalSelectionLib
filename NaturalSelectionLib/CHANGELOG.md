@@ -1,4 +1,5 @@
 ## 0.6.7
+- Updated methods to remove items not meeting conditions instead of adding ones that do to temporary list
 
 ### FilterEnemyList
 - No longer turns blacklist entry names to upper case
