@@ -20,7 +20,7 @@ namespace NaturalSelectionLib
             return MyPluginInfo.PLUGIN_VERSION;
         }
 
-        public static void UpdateListInsideDictionrary(Type instanceType, List<EnemyAI> list)
+        public static void UpdateListInsideDictionrary(Type instanceType, ref List<EnemyAI> list)
         {
             if (!globalEnemyLists.ContainsKey(instanceType))
             {
@@ -92,7 +92,7 @@ namespace NaturalSelectionLib
             return tempList;
         }
 
-        public static List<EnemyAI> GetInsideOrOutsideEnemyList(List<EnemyAI> importEnemyList, EnemyAI instance)
+        public static void GetInsideOrOutsideEnemyList(ref List<EnemyAI> importEnemyList, EnemyAI instance)
         {
             foreach (EnemyAI enemy in importEnemyList.ToList())
             {
@@ -102,10 +102,9 @@ namespace NaturalSelectionLib
                     if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)}/GetInsideOrOutsideEnemyList/ addded {DebugStringHead(enemy)}");
                 }
             }
-            return importEnemyList;
         }
 
-        public static EnemyAI? FindClosestEnemy(List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool includeTheDead = false)
+        public static EnemyAI? FindClosestEnemy(ref List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool includeTheDead = false)
         {            
             foreach (EnemyAI enemy in importEnemyList)
             {
@@ -185,7 +184,7 @@ namespace NaturalSelectionLib
             if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} findClosestEnemy returning {DebugStringHead(importClosestEnemy)}");
             return importClosestEnemy;
         }
-        public static List<EnemyAI> FilterEnemyList(List<EnemyAI> importEnemyList, List<Type>? targetTypes, List<string>? blacklist,EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
+        public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, List<Type>? targetTypes, List<string>? blacklist,EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
         {
             List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
             for (int i = 0; i < tempList.Count; i++)
@@ -241,11 +240,10 @@ namespace NaturalSelectionLib
                     //filteredList.Add(importEnemyList[i]);
                 }
             }
-            return importEnemyList;
         }
 
 
-        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1)
+        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, ref List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1)
         {
             List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
             Dictionary<EnemyAI, float> tempDictionary = new Dictionary<EnemyAI, float>();

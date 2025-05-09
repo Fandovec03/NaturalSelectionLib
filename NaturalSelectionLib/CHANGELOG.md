@@ -1,3 +1,6 @@
+## 0.6.8
+- Refactored methods
+
 ## 0.6.7
 - Updated methods to remove items not meeting conditions instead of adding ones that do to temporary list
 
