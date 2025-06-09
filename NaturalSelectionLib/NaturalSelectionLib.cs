@@ -29,6 +29,11 @@ namespace NaturalSelectionLib
             }
             else
             {
+                if (globalEnemyLists[instanceType].SequenceEqual(list))
+                {
+                    if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ Sequence in " + instanceType + " is equal. Skipping.");
+                    return;
+                }
                 globalEnemyLists[instanceType] = list;
                 if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ updating list for " + instanceType);
             }
@@ -184,7 +189,7 @@ namespace NaturalSelectionLib
             if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} findClosestEnemy returning {DebugStringHead(importClosestEnemy)}");
             return importClosestEnemy;
         }
-        public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, List<Type>? targetTypes, List<string>? blacklist,EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
+        public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, EnemySize[] enemySizes, List<string>? blacklist,EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
         {
             List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
             for (int i = 0; i < tempList.Count; i++)
@@ -222,21 +227,23 @@ namespace NaturalSelectionLib
                     continue;
                 }
 
-                if (targetTypes != null && targetTypes.Count > 0 && (inverseToggle == false && targetTypes.Contains(tempList[i].GetType()) || inverseToggle == true && !targetTypes.Contains(tempList[i].GetType())))
+                
+
+                if (enemySizes != null && enemySizes.Length > 0 && (inverseToggle == false && enemySizes.Contains(tempList[i].enemyType.EnemySize) || inverseToggle == true && !enemySizes.Contains(tempList[i].enemyType.EnemySize)))
                 {
-                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of type {tempList[i].GetType()} passed the filter. inverseToggle: {inverseToggle}");
+                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of size {enemySizes.Contains(tempList[i].enemyType.EnemySize)} passed the filter. inverseToggle: {inverseToggle}");
                     //filteredList.Add(importEnemyList[i]);
                 }
-                else if (targetTypes != null && targetTypes.Count > 0)
+                else if (enemySizes != null && enemySizes.Length > 0)
                 {
-                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of type {tempList[i].GetType()}");
+                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of size {enemySizes.Contains(tempList[i].enemyType.EnemySize)}");
                     importEnemyList.Remove(tempList[i]);
                     continue;
                 }
-                if (targetTypes == null || targetTypes.Count < 1)
+                if (enemySizes == null || enemySizes.Length < 1)
                 {
-                    if (debugLibrary && targetTypes != null && targetTypes.Count < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} TargetTypes is empty. Adding enemy of type {tempList[i].GetType()} by default");
-                    if (debugLibrary && targetTypes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} TargetTypes is NULL. Adding enemy of type {tempList[i].GetType()} by default");
+                    if (debugLibrary && enemySizes != null && enemySizes.Length < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is empty. Adding enemy of size {enemySizes.Contains(tempList[i].enemyType.EnemySize)} by default");
+                    if (debugLibrary && enemySizes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is NULL. Adding enemy of size {enemySizes.Contains(tempList[i].enemyType.EnemySize)} by default");
                     //filteredList.Add(importEnemyList[i]);
                 }
             }
