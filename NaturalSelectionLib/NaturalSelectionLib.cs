@@ -189,7 +189,7 @@ namespace NaturalSelectionLib
             if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} findClosestEnemy returning {DebugStringHead(importClosestEnemy)}");
             return importClosestEnemy;
         }
-        public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, EnemySize[] enemySizes, List<string>? blacklist,EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
+        public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, List<string>? blacklist,EnemyAI instance, bool filterOutImmortal = true)
         {
             List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
             for (int i = 0; i < tempList.Count; i++)
@@ -226,29 +226,60 @@ namespace NaturalSelectionLib
                     importEnemyList.Remove(tempList[i]);
                     continue;
                 }
+            }
+        }
 
-                
 
+        static public void FilterEnemySizes(ref List<EnemyAI> importEnemyList, EnemySize[] enemySizes, EnemyAI instance,bool inverseToggle = false)
+        {
+            List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
+            for (int i = 0; i < tempList.Count; i++)
+            {
                 if (enemySizes != null && enemySizes.Length > 0 && (inverseToggle == false && enemySizes.Contains(tempList[i].enemyType.EnemySize) || inverseToggle == true && !enemySizes.Contains(tempList[i].enemyType.EnemySize)))
                 {
-                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of size {enemySizes.Contains(tempList[i].enemyType.EnemySize)} passed the filter. inverseToggle: {inverseToggle}");
+                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of size {tempList[i].enemyType.EnemySize} passed the filter. inverseToggle: {inverseToggle}");
                     //filteredList.Add(importEnemyList[i]);
                 }
                 else if (enemySizes != null && enemySizes.Length > 0)
                 {
-                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of size {enemySizes.Contains(tempList[i].enemyType.EnemySize)}");
+                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of size {tempList[i].enemyType.EnemySize}");
                     importEnemyList.Remove(tempList[i]);
                     continue;
                 }
                 if (enemySizes == null || enemySizes.Length < 1)
                 {
-                    if (debugLibrary && enemySizes != null && enemySizes.Length < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is empty. Adding enemy of size {enemySizes.Contains(tempList[i].enemyType.EnemySize)} by default");
-                    if (debugLibrary && enemySizes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is NULL. Adding enemy of size {enemySizes.Contains(tempList[i].enemyType.EnemySize)} by default");
+                    if (debugLibrary && enemySizes != null && enemySizes.Length < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is empty. Adding enemy of size {tempList[i].enemyType.EnemySize} by default");
+                    if (debugLibrary && enemySizes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is NULL. Adding enemy of size {tempList[i].enemyType.EnemySize} by default");
                     //filteredList.Add(importEnemyList[i]);
                 }
             }
         }
 
+        static public void FilterEnemySizes(ref Dictionary<EnemyAI, int> importEnemySizeDict, int[] enemySizes, EnemyAI instance, bool inverseToggle = false)
+        {
+            Dictionary<EnemyAI, int> tempList = new Dictionary<EnemyAI, int>(importEnemySizeDict);
+
+            foreach (var keyValuePair in tempList)
+            {
+                if (enemySizes != null && enemySizes.Length > 0 && (inverseToggle == false && enemySizes.Contains(keyValuePair.Value) || inverseToggle == true && !enemySizes.Contains(keyValuePair.Value)))
+                {
+                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of size {keyValuePair.Value} passed the filter. inverseToggle: {inverseToggle}");
+                    //filteredList.Add(importEnemyList[i]);
+                }
+                else if (enemySizes != null && enemySizes.Length > 0)
+                {
+                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of size {keyValuePair.Value}");
+                    importEnemySizeDict.Remove(keyValuePair.Key);
+                    continue;
+                }
+                if (enemySizes == null || enemySizes.Length < 1)
+                {
+                    if (debugLibrary && enemySizes != null && enemySizes.Length < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is empty. Adding enemy of size {keyValuePair.Value} by default");
+                    if (debugLibrary && enemySizes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is NULL. Adding enemy of size {keyValuePair.Value} by default");
+                    //filteredList.Add(importEnemyList[i]);
+                }
+            }
+        }
 
         static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, ref List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1)
         {
