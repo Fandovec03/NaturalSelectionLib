@@ -38,7 +38,7 @@ namespace NaturalSelectionLib
                 if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ updating list for " + instanceType);
             }
         }
-        static public void LibrarySetup(ManualLogSource importLogger, bool spammyLogs = false, bool debuglibrary = false)
+        static public void SetLibraryLoggers(ManualLogSource importLogger, bool spammyLogs = false, bool debuglibrary = false)
         {
             LibraryLogger = importLogger;
             debugSpam = spammyLogs;
@@ -104,7 +104,7 @@ namespace NaturalSelectionLib
                 if (enemy == instance || (enemy.isOutside != instance.isOutside))
                 {
                     importEnemyList.Remove(enemy);
-                    if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)}/GetInsideOrOutsideEnemyList/ addded {DebugStringHead(enemy)}");
+                    if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)}/GetInsideOrOutsideEnemyList/ removed {DebugStringHead(enemy)}");
                 }
             }
         }
@@ -189,7 +189,7 @@ namespace NaturalSelectionLib
             if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} findClosestEnemy returning {DebugStringHead(importClosestEnemy)}");
             return importClosestEnemy;
         }
-        public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, List<string>? blacklist,EnemyAI instance, bool filterOutImmortal = true)
+        public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, List<string>? blacklist,EnemyAI instance, bool filterOutImmortal = true, bool filterTheSameType = true)
         {
             List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
             for (int i = 0; i < tempList.Count; i++)
@@ -197,6 +197,12 @@ namespace NaturalSelectionLib
                 if (tempList[i] == instance)
                 {
                     if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found itself in importEnemyList! Skipping...");
+                    importEnemyList.Remove(tempList[i]);
+                    continue;
+                }
+                if (filterTheSameType && tempList[i].GetType() == instance.GetType())
+                {
+                    if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found its own type in importEnemyList! Skipping...");
                     importEnemyList.Remove(tempList[i]);
                     continue;
                 }
