@@ -287,39 +287,111 @@ namespace NaturalSelectionLib
             }
         }
 
-        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, ref List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1)
+        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, ref List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1, Vector3? importEyePosition = null)
         {
-            List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
             Dictionary<EnemyAI, float> tempDictionary = new Dictionary<EnemyAI, float>();
             float range = importRange;
+            Vector3 eyePosition = instance.eye.position;
+            if (importEyePosition != null)
+            {
+                eyePosition = importEyePosition.Value;
+            }
+            int mask = LayerMask.GetMask("Enemies");
 
             if (instance.isOutside && !instance.enemyType.canSeeThroughFog && TimeOfDay.Instance.currentLevelWeather == LevelWeatherType.Foggy)
             {
                 range = Mathf.Clamp(importRange, 0, 30);
             }
-            if (tempList != null && tempList.Count > 0)
+
+            int num = Physics.OverlapSphereNonAlloc(eyePosition, range, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
+
+            for (int i = 0; i < num; i++)
             {
-                for (int i = 0; i < tempList.Count; i++)
+                if (!RoundManager.Instance.tempColliderResults[i].gameObject.TryGetComponent<EnemyAICollisionDetect>(out EnemyAICollisionDetect AIcol))
                 {
-                    if (tempList[i] == null)
+                    continue;
+                }
+                EnemyAI enemyAI = AIcol.mainScript;
+                if (enemyAI == instance)
+                {
+                    continue;
+                }
+                if (!importEnemyList.Contains(enemyAI))
+                {
+                    if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Enemy not found in imported enemy list! Skipping...");
+                    continue;
+                }
+                Vector3 position = enemyAI.transform.position;
+                if (Vector3.Distance(position, instance.eye.position) < range && !Physics.Linecast(instance.eye.position, position, StartOfRound.Instance.collidersAndRoomMaskAndDefault, QueryTriggerInteraction.Ignore))
+                {
+                    if (instance.CheckLineOfSightForPosition(position, width, (int)range, proximityAwareness, instance.eye))
                     {
-                        if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Enemy not found! Removing from tempList");
-                        importEnemyList.Remove(tempList[i]);
+                        if (!tempDictionary.ContainsKey(enemyAI))
+                        {
+                            tempDictionary.Add(enemyAI, Vector3.Distance(instance.transform.position, position));
+                            if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Added {enemyAI} to tempDictionary");
+                        }
+                        if (tempDictionary.ContainsKey(enemyAI) && debugLibrary && debugSpam)
+                        {
+                            if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: {enemyAI} is already in tempDictionary");
+                        }
+                    }
+                }
+            }
+            if (tempDictionary.Count > 1)
+            {
+                tempDictionary.OrderBy(value => tempDictionary.Values).Reverse();
+                if (debugLibrary)
+                {
+                    foreach (KeyValuePair<EnemyAI, float> enemy in tempDictionary)
+                    {
+                        if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Final list: {enemy.Key}, range: {enemy.Value}");
+                    }
+                }
+            }
+            return tempDictionary;
+        }
+
+        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, float width = 45f, float importRange = 0, float proximityAwareness = -1, Vector3? importEyePosition = null)
+        {
+            Dictionary<EnemyAI, float> tempDictionary = new Dictionary<EnemyAI, float>();
+            float range = importRange;
+            Vector3 eyePosition = instance.eye.position;
+            if (importEyePosition != null)
+            {
+                eyePosition = importEyePosition.Value;
+            }
+            int mask = LayerMask.GetMask("Enemies");
+
+            if (instance.isOutside && !instance.enemyType.canSeeThroughFog && TimeOfDay.Instance.currentLevelWeather == LevelWeatherType.Foggy)
+            {
+                range = Mathf.Clamp(importRange, 0, 30);
+            }
+
+            int num = Physics.OverlapSphereNonAlloc(eyePosition, range, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
+
+            for (int i = 0; i < num; i++)
+            {
+                if (RoundManager.Instance.tempColliderResults[i].gameObject.TryGetComponent<EnemyAICollisionDetect>(out EnemyAICollisionDetect AIcol))
+                {
+                    EnemyAI enemyAI = AIcol.mainScript;
+                    if (enemyAI == instance)
+                    {
                         continue;
                     }
-                    Vector3 position = tempList[i].transform.position;
+                    Vector3 position = enemyAI.transform.position;
                     if (Vector3.Distance(position, instance.eye.position) < range && !Physics.Linecast(instance.eye.position, position, StartOfRound.Instance.collidersAndRoomMaskAndDefault, QueryTriggerInteraction.Ignore))
                     {
                         if (instance.CheckLineOfSightForPosition(position, width, (int)range, proximityAwareness, instance.eye))
                         {
-                            if (!tempDictionary.ContainsKey(tempList[i]))
+                            if (!tempDictionary.ContainsKey(enemyAI))
                             {
-                                tempDictionary.Add(tempList[i], Vector3.Distance(instance.transform.position, position));
-                                if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Added {tempList[i]} to tempDictionary");
+                                tempDictionary.Add(enemyAI, Vector3.Distance(instance.transform.position, position));
+                                if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Added {enemyAI} to tempDictionary");
                             }
-                            if (tempDictionary.ContainsKey(tempList[i]) && debugLibrary && debugSpam)
+                            if (tempDictionary.ContainsKey(enemyAI) && debugLibrary && debugSpam)
                             {
-                                if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: {tempList[i]} is already in tempDictionary");
+                                if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: {enemyAI} is already in tempDictionary");
                             }
                         }
                     }
