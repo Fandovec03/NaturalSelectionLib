@@ -4,6 +4,7 @@ using System.Linq;
 using BepInEx;
 using BepInEx.Logging;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace NaturalSelectionLib
 {
@@ -97,6 +98,64 @@ namespace NaturalSelectionLib
             return tempList;
         }
 
+        public static List<EnemyAI> GetNearbyEnemies(EnemyAI instance, float radius = 0f, Vector3? importEyePosition = null, int includeOrReturnTheDead = 0)
+        {
+            List<EnemyAI> tempList = new List<EnemyAI>();
+
+            Vector3 eyePosition = instance.eye.position;
+            if (importEyePosition != null)
+            {
+                eyePosition = importEyePosition.Value;
+            }
+            int mask = LayerMask.GetMask("Enemies");
+
+            int num = Physics.OverlapSphereNonAlloc(eyePosition, radius, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
+
+            for (int i = 0; i < num; i++)
+            {
+                if (!RoundManager.Instance.tempColliderResults[i].gameObject.TryGetComponent<EnemyAICollisionDetect>(out EnemyAICollisionDetect AIcol))
+                {
+                    continue;
+                }
+                EnemyAI enemyAI = AIcol.mainScript;
+                if (enemyAI == instance)
+                {
+                    continue;
+                }
+                if (!tempList.Contains(enemyAI))
+                {
+                    if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Enemy not found in imported enemy list! Skipping...");
+
+                    switch (includeOrReturnTheDead)
+                    {
+                        case 0:
+                        {
+                            if (!enemyAI.isEnemyDead)
+                            {
+                                tempList.Add(enemyAI);
+                                break;
+                            }
+                        break;
+                        }
+                        case 1:
+                        {
+                            tempList.Add(enemyAI);
+                            break;
+                        }
+                        case 2:
+                        {
+                            if (enemyAI.isEnemyDead)
+                            {
+                                tempList.Add(enemyAI);
+                                break;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            return tempList;
+        }
         public static void GetInsideOrOutsideEnemyList(ref List<EnemyAI> importEnemyList, EnemyAI instance)
         {
             foreach (EnemyAI enemy in importEnemyList.ToList())
@@ -287,10 +346,11 @@ namespace NaturalSelectionLib
             }
         }
 
-        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, ref List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1, Vector3? importEyePosition = null)
+        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, ref List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1, float importRadius = 0, Vector3? importEyePosition = null)
         {
             Dictionary<EnemyAI, float> tempDictionary = new Dictionary<EnemyAI, float>();
             float range = importRange;
+            float radius = importRadius;
             Vector3 eyePosition = instance.eye.position;
             if (importEyePosition != null)
             {
@@ -302,8 +362,11 @@ namespace NaturalSelectionLib
             {
                 range = Mathf.Clamp(importRange, 0, 30);
             }
-
-            int num = Physics.OverlapSphereNonAlloc(eyePosition, range, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
+            if (radius <= 0)
+            {
+                radius = range * 2;
+            }
+            int num = Physics.OverlapSphereNonAlloc(eyePosition, radius, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
 
             for (int i = 0; i < num; i++)
             {
@@ -352,11 +415,13 @@ namespace NaturalSelectionLib
             return tempDictionary;
         }
 
-        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, float width = 45f, float importRange = 0, float proximityAwareness = -1, Vector3? importEyePosition = null)
+        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, float width = 45f, float importRange = 0, float proximityAwareness = -1, float importRadius = 0, Vector3? importEyePosition = null)
         {
             Dictionary<EnemyAI, float> tempDictionary = new Dictionary<EnemyAI, float>();
             float range = importRange;
+            float radius = importRadius;
             Vector3 eyePosition = instance.eye.position;
+
             if (importEyePosition != null)
             {
                 eyePosition = importEyePosition.Value;
@@ -367,8 +432,12 @@ namespace NaturalSelectionLib
             {
                 range = Mathf.Clamp(importRange, 0, 30);
             }
+            if (radius <= 0)
+            {
+                radius = range * 2;
+            }
 
-            int num = Physics.OverlapSphereNonAlloc(eyePosition, range, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
+            int num = Physics.OverlapSphereNonAlloc(eyePosition, radius, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
 
             for (int i = 0; i < num; i++)
             {
