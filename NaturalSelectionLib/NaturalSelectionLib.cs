@@ -4,6 +4,7 @@ using System.Linq;
 using BepInEx;
 using BepInEx.Logging;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace NaturalSelectionLib
 {
@@ -20,7 +21,7 @@ namespace NaturalSelectionLib
             return MyPluginInfo.PLUGIN_VERSION;
         }
 
-        public static void UpdateListInsideDictionrary(Type instanceType, List<EnemyAI> list)
+        public static void UpdateListInsideDictionrary(Type instanceType, ref List<EnemyAI> list)
         {
             if (!globalEnemyLists.ContainsKey(instanceType))
             {
@@ -29,11 +30,16 @@ namespace NaturalSelectionLib
             }
             else
             {
+                if (globalEnemyLists[instanceType].SequenceEqual(list))
+                {
+                    if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ Sequence in " + instanceType + " is equal. Skipping.");
+                    return;
+                }
                 globalEnemyLists[instanceType] = list;
                 if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ updating list for " + instanceType);
             }
         }
-        static public void LibrarySetup(ManualLogSource importLogger, bool spammyLogs = false, bool debuglibrary = false)
+        static public void SetLibraryLoggers(ManualLogSource importLogger, bool spammyLogs = false, bool debuglibrary = false)
         {
             LibraryLogger = importLogger;
             debugSpam = spammyLogs;
@@ -92,20 +98,77 @@ namespace NaturalSelectionLib
             return tempList;
         }
 
-        public static List<EnemyAI> GetInsideOrOutsideEnemyList(List<EnemyAI> importEnemyList, EnemyAI instance)
+        public static List<EnemyAI> GetNearbyEnemies(EnemyAI instance, float radius = 0f, Vector3? importEyePosition = null, int includeOrReturnTheDead = 0)
+        {
+            List<EnemyAI> tempList = new List<EnemyAI>();
+
+            Vector3 eyePosition = instance.eye.position;
+            if (importEyePosition != null)
+            {
+                eyePosition = importEyePosition.Value;
+            }
+            int mask = LayerMask.GetMask("Enemies");
+
+            int num = Physics.OverlapSphereNonAlloc(eyePosition, radius, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
+
+            for (int i = 0; i < num; i++)
+            {
+                if (!RoundManager.Instance.tempColliderResults[i].gameObject.TryGetComponent<EnemyAICollisionDetect>(out EnemyAICollisionDetect AIcol))
+                {
+                    continue;
+                }
+                EnemyAI enemyAI = AIcol.mainScript;
+                if (enemyAI == instance)
+                {
+                    continue;
+                }
+                if (!tempList.Contains(enemyAI))
+                {
+                    if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Enemy not found in imported enemy list! Skipping...");
+
+                    switch (includeOrReturnTheDead)
+                    {
+                        case 0:
+                        {
+                            if (!enemyAI.isEnemyDead)
+                            {
+                                tempList.Add(enemyAI);
+                                break;
+                            }
+                        break;
+                        }
+                        case 1:
+                        {
+                            tempList.Add(enemyAI);
+                            break;
+                        }
+                        case 2:
+                        {
+                            if (enemyAI.isEnemyDead)
+                            {
+                                tempList.Add(enemyAI);
+                                break;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            return tempList;
+        }
+        public static void GetInsideOrOutsideEnemyList(ref List<EnemyAI> importEnemyList, EnemyAI instance)
         {
             foreach (EnemyAI enemy in importEnemyList.ToList())
             {
                 if (enemy == instance || (enemy.isOutside != instance.isOutside))
                 {
                     importEnemyList.Remove(enemy);
-                    if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)}/GetInsideOrOutsideEnemyList/ addded {DebugStringHead(enemy)}");
+                    if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)}/GetInsideOrOutsideEnemyList/ removed {DebugStringHead(enemy)}");
                 }
             }
-            return importEnemyList;
         }
 
-        public static EnemyAI? FindClosestEnemy(List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool includeTheDead = false)
+        public static EnemyAI? FindClosestEnemy(ref List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool includeTheDead = false)
         {            
             foreach (EnemyAI enemy in importEnemyList)
             {
@@ -185,7 +248,7 @@ namespace NaturalSelectionLib
             if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} findClosestEnemy returning {DebugStringHead(importClosestEnemy)}");
             return importClosestEnemy;
         }
-        public static List<EnemyAI> FilterEnemyList(List<EnemyAI> importEnemyList, List<Type>? targetTypes, List<string>? blacklist,EnemyAI instance, bool inverseToggle = false, bool filterOutImmortal = true)
+        public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, List<string>? blacklist,EnemyAI instance, bool filterOutImmortal = true, bool filterTheSameType = true)
         {
             List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
             for (int i = 0; i < tempList.Count; i++)
@@ -193,6 +256,12 @@ namespace NaturalSelectionLib
                 if (tempList[i] == instance)
                 {
                     if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found itself in importEnemyList! Skipping...");
+                    importEnemyList.Remove(tempList[i]);
+                    continue;
+                }
+                if (filterTheSameType && tempList[i].GetType() == instance.GetType())
+                {
+                    if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} Found its own type in importEnemyList! Skipping...");
                     importEnemyList.Remove(tempList[i]);
                     continue;
                 }
@@ -222,62 +291,176 @@ namespace NaturalSelectionLib
                     importEnemyList.Remove(tempList[i]);
                     continue;
                 }
-
-                if (targetTypes != null && targetTypes.Count > 0 && (inverseToggle == false && targetTypes.Contains(tempList[i].GetType()) || inverseToggle == true && !targetTypes.Contains(tempList[i].GetType())))
-                {
-                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of type {tempList[i].GetType()} passed the filter. inverseToggle: {inverseToggle}");
-                    //filteredList.Add(importEnemyList[i]);
-                }
-                else if (targetTypes != null && targetTypes.Count > 0)
-                {
-                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of type {tempList[i].GetType()}");
-                    importEnemyList.Remove(tempList[i]);
-                    continue;
-                }
-                if (targetTypes == null || targetTypes.Count < 1)
-                {
-                    if (debugLibrary && targetTypes != null && targetTypes.Count < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} TargetTypes is empty. Adding enemy of type {tempList[i].GetType()} by default");
-                    if (debugLibrary && targetTypes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} TargetTypes is NULL. Adding enemy of type {tempList[i].GetType()} by default");
-                    //filteredList.Add(importEnemyList[i]);
-                }
             }
-            return importEnemyList;
         }
 
 
-        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1)
+        static public void FilterEnemySizes(ref List<EnemyAI> importEnemyList, EnemySize[] enemySizes, EnemyAI instance,bool inverseToggle = false)
         {
             List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
+            for (int i = 0; i < tempList.Count; i++)
+            {
+                if (enemySizes != null && enemySizes.Length > 0 && (inverseToggle == false && enemySizes.Contains(tempList[i].enemyType.EnemySize) || inverseToggle == true && !enemySizes.Contains(tempList[i].enemyType.EnemySize)))
+                {
+                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of size {tempList[i].enemyType.EnemySize} passed the filter. inverseToggle: {inverseToggle}");
+                    //filteredList.Add(importEnemyList[i]);
+                }
+                else if (enemySizes != null && enemySizes.Length > 0)
+                {
+                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of size {tempList[i].enemyType.EnemySize}");
+                    importEnemyList.Remove(tempList[i]);
+                    continue;
+                }
+                if (enemySizes == null || enemySizes.Length < 1)
+                {
+                    if (debugLibrary && enemySizes != null && enemySizes.Length < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is empty. Adding enemy of size {tempList[i].enemyType.EnemySize} by default");
+                    if (debugLibrary && enemySizes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is NULL. Adding enemy of size {tempList[i].enemyType.EnemySize} by default");
+                    //filteredList.Add(importEnemyList[i]);
+                }
+            }
+        }
+
+        static public void FilterEnemySizes(ref Dictionary<EnemyAI, int> importEnemySizeDict, int[] enemySizes, EnemyAI instance, bool inverseToggle = false)
+        {
+            Dictionary<EnemyAI, int> tempList = new Dictionary<EnemyAI, int>(importEnemySizeDict);
+
+            foreach (var keyValuePair in tempList)
+            {
+                if (enemySizes != null && enemySizes.Length > 0 && (inverseToggle == false && enemySizes.Contains(keyValuePair.Value) || inverseToggle == true && !enemySizes.Contains(keyValuePair.Value)))
+                {
+                    if (debugLibrary) LibraryLogger.LogDebug($"{DebugStringHead(instance)} Enemy of size {keyValuePair.Value} passed the filter. inverseToggle: {inverseToggle}");
+                    //filteredList.Add(importEnemyList[i]);
+                }
+                else if (enemySizes != null && enemySizes.Length > 0)
+                {
+                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out Enemy of size {keyValuePair.Value}");
+                    importEnemySizeDict.Remove(keyValuePair.Key);
+                    continue;
+                }
+                if (enemySizes == null || enemySizes.Length < 1)
+                {
+                    if (debugLibrary && enemySizes != null && enemySizes.Length < 1) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is empty. Adding enemy of size {keyValuePair.Value} by default");
+                    if (debugLibrary && enemySizes == null) LibraryLogger.LogInfo($"{DebugStringHead(instance)} enemySizes is NULL. Adding enemy of size {keyValuePair.Value} by default");
+                    //filteredList.Add(importEnemyList[i]);
+                }
+            }
+        }
+
+        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, ref List<EnemyAI> importEnemyList, float width = 45f, float importRange = 0, float proximityAwareness = -1, float importRadius = 0, Vector3? importEyePosition = null)
+        {
             Dictionary<EnemyAI, float> tempDictionary = new Dictionary<EnemyAI, float>();
             float range = importRange;
+            float radius = importRadius;
+            Vector3 eyePosition = instance.eye.position;
+            if (importEyePosition != null)
+            {
+                eyePosition = importEyePosition.Value;
+            }
+            int mask = LayerMask.GetMask("Enemies");
 
             if (instance.isOutside && !instance.enemyType.canSeeThroughFog && TimeOfDay.Instance.currentLevelWeather == LevelWeatherType.Foggy)
             {
                 range = Mathf.Clamp(importRange, 0, 30);
             }
-            if (tempList != null && tempList.Count > 0)
+            if (radius <= 0)
             {
-                for (int i = 0; i < tempList.Count; i++)
+                radius = range * 2;
+            }
+            int num = Physics.OverlapSphereNonAlloc(eyePosition, radius, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
+
+            for (int i = 0; i < num; i++)
+            {
+                if (!RoundManager.Instance.tempColliderResults[i].gameObject.TryGetComponent<EnemyAICollisionDetect>(out EnemyAICollisionDetect AIcol))
                 {
-                    if (tempList[i] == null)
+                    continue;
+                }
+                EnemyAI enemyAI = AIcol.mainScript;
+                if (enemyAI == instance)
+                {
+                    continue;
+                }
+                if (!importEnemyList.Contains(enemyAI))
+                {
+                    if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Enemy not found in imported enemy list! Skipping...");
+                    continue;
+                }
+                Vector3 position = enemyAI.transform.position;
+                if (Vector3.Distance(position, instance.eye.position) < range && !Physics.Linecast(instance.eye.position, position, StartOfRound.Instance.collidersAndRoomMaskAndDefault, QueryTriggerInteraction.Ignore))
+                {
+                    if (instance.CheckLineOfSightForPosition(position, width, (int)range, proximityAwareness, instance.eye))
                     {
-                        if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Enemy not found! Removing from tempList");
-                        importEnemyList.Remove(tempList[i]);
+                        if (!tempDictionary.ContainsKey(enemyAI))
+                        {
+                            tempDictionary.Add(enemyAI, Vector3.Distance(instance.transform.position, position));
+                            if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Added {enemyAI} to tempDictionary");
+                        }
+                        if (tempDictionary.ContainsKey(enemyAI) && debugLibrary && debugSpam)
+                        {
+                            if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: {enemyAI} is already in tempDictionary");
+                        }
+                    }
+                }
+            }
+            if (tempDictionary.Count > 1)
+            {
+                tempDictionary.OrderBy(value => tempDictionary.Values).Reverse();
+                if (debugLibrary)
+                {
+                    foreach (KeyValuePair<EnemyAI, float> enemy in tempDictionary)
+                    {
+                        if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Final list: {enemy.Key}, range: {enemy.Value}");
+                    }
+                }
+            }
+            return tempDictionary;
+        }
+
+        static public Dictionary<EnemyAI, float> GetEnemiesInLOS(EnemyAI instance, float width = 45f, float importRange = 0, float proximityAwareness = -1, float importRadius = 0, Vector3? importEyePosition = null)
+        {
+            Dictionary<EnemyAI, float> tempDictionary = new Dictionary<EnemyAI, float>();
+            float range = importRange;
+            float radius = importRadius;
+            Vector3 eyePosition = instance.eye.position;
+
+            if (importEyePosition != null)
+            {
+                eyePosition = importEyePosition.Value;
+            }
+            int mask = LayerMask.GetMask("Enemies");
+
+            if (instance.isOutside && !instance.enemyType.canSeeThroughFog && TimeOfDay.Instance.currentLevelWeather == LevelWeatherType.Foggy)
+            {
+                range = Mathf.Clamp(importRange, 0, 30);
+            }
+            if (radius <= 0)
+            {
+                radius = range * 2;
+            }
+
+            int num = Physics.OverlapSphereNonAlloc(eyePosition, radius, RoundManager.Instance.tempColliderResults, mask, QueryTriggerInteraction.Collide);
+
+            for (int i = 0; i < num; i++)
+            {
+                if (RoundManager.Instance.tempColliderResults[i].gameObject.TryGetComponent<EnemyAICollisionDetect>(out EnemyAICollisionDetect AIcol))
+                {
+                    EnemyAI enemyAI = AIcol.mainScript;
+                    if (enemyAI == instance)
+                    {
                         continue;
                     }
-                    Vector3 position = tempList[i].transform.position;
+                    Vector3 position = enemyAI.transform.position;
                     if (Vector3.Distance(position, instance.eye.position) < range && !Physics.Linecast(instance.eye.position, position, StartOfRound.Instance.collidersAndRoomMaskAndDefault, QueryTriggerInteraction.Ignore))
                     {
                         if (instance.CheckLineOfSightForPosition(position, width, (int)range, proximityAwareness, instance.eye))
                         {
-                            if (!tempDictionary.ContainsKey(tempList[i]))
+                            if (!tempDictionary.ContainsKey(enemyAI))
                             {
-                                tempDictionary.Add(tempList[i], Vector3.Distance(instance.transform.position, position));
-                                if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Added {tempList[i]} to tempDictionary");
+                                tempDictionary.Add(enemyAI, Vector3.Distance(instance.transform.position, position));
+                                if (debugLibrary && debugSpam) LibraryLogger.LogDebug($"{DebugStringHead(instance)} /GetEnemiesInLOS/: Added {enemyAI} to tempDictionary");
                             }
-                            if (tempDictionary.ContainsKey(tempList[i]) && debugLibrary && debugSpam)
+                            if (tempDictionary.ContainsKey(enemyAI) && debugLibrary && debugSpam)
                             {
-                                if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: {tempList[i]} is already in tempDictionary");
+                                if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(instance)} /GetEnemiesInLOS/: {enemyAI} is already in tempDictionary");
                             }
                         }
                     }

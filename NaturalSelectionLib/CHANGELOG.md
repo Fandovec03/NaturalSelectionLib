@@ -1,3 +1,13 @@
+## 0.7.0
+
+- Reformated methods to pass lists by reference in parameters
+- Added parameter to FilterEnemyList
+- Added method with 2 overloads for filtering out list by size
+	- Can be used with custom size enums
+- Optimized GetEnemiesInLOS with OverlapSpheres
+	- Added an overload
+- Added new method GetNearbyEnemies. Returns list of all enemies in radius
+
 ## 0.6.7
 - Updated methods to remove items not meeting conditions instead of adding ones that do to temporary list
 
