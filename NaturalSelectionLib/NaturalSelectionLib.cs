@@ -46,12 +46,46 @@ namespace NaturalSelectionLib
             debugLibrary = debuglibrary;
         }
 
-        public static string DebugStringHead(EnemyAI? __instance, bool shortFormat = true)
+        /// <summary>
+        /// Returns head with the name, IDs and additional variables of the source or the value of the source.
+        /// </summary>
+        /// <param name="source">
+        /// Source object the head is made for. Supported types: EnemyAI, SandSpiderWebTrap, GrabbableObject, string.
+        /// </param>
+        /// <param name="shortFormat"></param>
+        /// <returns></returns>
+
+        public static string DebugStringHead(object? source, bool shortFormat = true)
         {
-            if (!__instance) return "Unknown instance: ";
-            string FinalString = $"({__instance?.enemyType.enemyName}|ID: {__instance?.NetworkObjectId}|LocalID: {__instance?.GetInstanceID()}|ThisEnemyIndex: {__instance?.thisEnemyIndex}) ";
-            if (shortFormat) FinalString  = $"({__instance?.enemyType.enemyName}|ID: {__instance?.NetworkObjectId}) ";
-            return FinalString;
+            string finalString = "";
+            if (source != null)
+            {
+                string tempString = "";
+
+                if (source is EnemyAI)
+                {
+                    EnemyAI enemyAI = (EnemyAI)source;
+                    tempString = $"{enemyAI.enemyType.enemyName}|ID: {enemyAI.NetworkObjectId}|ThisEnemyIndex: {enemyAI.thisEnemyIndex}";
+                    if (shortFormat) tempString = $"{enemyAI?.enemyType.enemyName}|ID: {enemyAI?.NetworkObjectId}";
+                }
+                else if (source is SandSpiderWebTrap)
+                {
+                    SandSpiderWebTrap webTrap = (SandSpiderWebTrap)source;
+                    tempString = $"Spider web {webTrap.trapID}";
+                    if (!shortFormat) tempString = $"Spider web {webTrap.trapID}, Owner {DebugStringHead(webTrap.mainScript)}";
+                }
+                else if (source is GrabbableObject)
+                {
+                    GrabbableObject grabbable = (GrabbableObject)source;
+                    tempString = $"{grabbable.itemProperties.itemName}, ID: {grabbable.NetworkObjectId}";
+                    if (!shortFormat) tempString = $"{grabbable.itemProperties.itemName}|ID: {grabbable.NetworkObjectId}|ItemID: {grabbable.itemProperties.itemId}";
+                }
+                else if (source is string) tempString = (string)source;
+                else tempString = "Unknown source";
+
+                finalString = $"({tempString})";
+            }
+            return finalString;
         }
         public static List<EnemyAI> GetCompleteList(EnemyAI instance, bool filterThemselves = true, int includeOrReturnTheDead = 0)
         {

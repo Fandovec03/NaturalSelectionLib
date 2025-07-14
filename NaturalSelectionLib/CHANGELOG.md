@@ -1,5 +1,9 @@
-## 0.7.0
+## 0.7.1
+- Updated DebugStringHead
+	- The method accepts and supports multiple types of the source
+	- Added summary
 
+## 0.7.0
 - Reformated methods to pass lists by reference in parameters
 - Added parameter to FilterEnemyList
 - Added method with 2 overloads for filtering out list by size
