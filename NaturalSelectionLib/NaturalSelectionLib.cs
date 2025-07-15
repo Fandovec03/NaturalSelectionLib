@@ -1,14 +1,21 @@
-﻿using System;
+﻿using BepInEx;
+using BepInEx.Bootstrap;
+using BepInEx.Logging;
+using NaturalSelectionLib.Comp;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using BepInEx;
-using BepInEx.Logging;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.AI;
+//using PathfindingLib.Jobs;
+//using PathfindingLib.Utilities;
+//using UnityEngine.Experimental.AI;
+//using Unity.Jobs;
 
 namespace NaturalSelectionLib
 {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+    [BepInDependency("Zaggy1024.PathfindingLib", BepInDependency.DependencyFlags.SoftDependency)]
     public class NaturalSelectionLib : BaseUnityPlugin
     {
         public static bool debugLibrary = false;
@@ -190,6 +197,71 @@ namespace NaturalSelectionLib
             }
             return tempList;
         }
+        public static bool GetPathLength(NavMeshAgent agent, Vector3 targetDestination, out float PathLength)
+        {
+            NavMeshPath path = new();
+            bool calculatedPath = false;
+            bool validpath = false;
+            Vector3[] corners = [];
+
+            if (!agent.enabled || !agent.isActiveAndEnabled)
+            {
+                LibraryLogger.LogWarning($"Agent is disabled!");
+                PathLength = -777.77f;
+                return false;
+            }
+
+            /*if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib"))
+            {
+                if (!PathfindingLibComp.Execute(agent, targetDestination, ref validpath, out PathLength)) return false;
+
+                LibraryLogger.LogMessage("PathfindingLib present. Switching to using PathfindingLib");
+                var previousJobHandle = default(JobHandle);
+                var pooledJob = JobPools.GetFindPathJob();
+                previousJobHandle = pooledJob.Job.ScheduleByRef(previousJobHandle);
+                pooledJob.Job.Initialize(agent.GetPathOrigin(), targetDestination, agent);
+                calculatedPath = pooledJob.Job.GetStatus().GetResult() != PathQueryStatus.InProgress;
+                validpath = pooledJob.Job.GetStatus().GetResult() == PathQueryStatus.Success;
+
+                if (calculatedPath)
+                {
+                    LibraryLogger.LogMessage("Calculated path.");
+                    if (validpath)
+                    {
+                        PathLength = pooledJob.Job.GetPathLength();
+                    }
+                    LibraryLogger.LogMessage("Released PathfindingLib job.");
+                    JobPools.ReleaseFindPathJob(pooledJob);
+                }
+                else
+                {
+                    LibraryLogger.LogError("PathfindingLib calculations is in progress");
+                    PathLength = -777.77f;
+                    return false;
+                }
+            }
+            else*/
+            {
+                calculatedPath = agent.CalculatePath(targetDestination, path);
+                validpath = calculatedPath && path.status == NavMeshPathStatus.PathComplete;
+                corners = path.corners;
+                if (validpath)
+                {
+                float calculatedDistance = 0f;
+                for (int i = 1; i < corners.Length; i++)
+                {
+                    float distance = Vector3.Distance(corners[i - 1], corners[i]);
+                    calculatedDistance += distance;
+                }
+                //if (calculatedDistance <= 0f) calculatedDistance = -777.77f;
+                PathLength = calculatedDistance;
+                LibraryLogger.LogMessage($"Found path length: {PathLength}");
+                return true;
+                }
+            }
+            PathLength = -777.77f;
+            return true;
+        }
         public static void GetInsideOrOutsideEnemyList(ref List<EnemyAI> importEnemyList, EnemyAI instance)
         {
             foreach (EnemyAI enemy in importEnemyList.ToList())
@@ -202,7 +274,7 @@ namespace NaturalSelectionLib
             }
         }
 
-        public static EnemyAI? FindClosestEnemy(ref List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool includeTheDead = false)
+        public static EnemyAI? FindClosestEnemy(ref List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool useThreatVisibility = true, bool usePathLengthAsDistance = false,bool includeTheDead = false)
         {            
             foreach (EnemyAI enemy in importEnemyList)
             {
@@ -271,13 +343,38 @@ namespace NaturalSelectionLib
                     if (debugLibrary) LibraryLogger.LogError($"{DebugStringHead(__instance)} Enemy not found! Skipping...");
                     continue;
                 }
-                if (Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position) < Vector3.Distance(__instance.transform.position, importClosestEnemy.transform.position))
+                bool noValidPaths = false;
+                float[] distance = [0f, 0f];
+                if (usePathLengthAsDistance && __instance.agent.isActiveAndEnabled)
                 {
-                    importClosestEnemy = importEnemyList[i];
-                    if (debugLibrary && debugSpam) LibraryLogger.LogDebug(Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position) < Vector3.Distance(__instance.transform.position, importClosestEnemy.transform.position));
-                    if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(__instance)} Assigned {DebugStringHead(importEnemyList[i])} as new closestEnemy. Distance: " + Vector3.Distance(__instance.transform.position, importClosestEnemy.transform.position));
-
+                    if
+                    (
+                    GetPathLength(__instance.agent, importEnemyList[i].transform.position, out distance[0]) && GetPathLength(__instance.agent, importClosestEnemy.transform.position, out distance[1])
+                    )
+                    {
+                        if (distance[0] == distance[1] && distance[0] == -777.77f)
+                        {
+                            noValidPaths = true;
+                        }
+                    }
                 }
+                if (noValidPaths || !usePathLengthAsDistance)
+                {
+                    distance[0] = Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position);
+                    distance[1] = Vector3.Distance(__instance.transform.position, importClosestEnemy.transform.position);
+                }
+                if (useThreatVisibility)
+                {
+                    importEnemyList[i].TryGetComponent<IVisibleThreat>(out IVisibleThreat threatImportEnemyList);
+                    importClosestEnemy.TryGetComponent<IVisibleThreat>(out IVisibleThreat threatImportClosestEnemy);
+                    if (threatImportEnemyList != null) distance[0] *= threatImportEnemyList.GetVisibility();
+                    if (threatImportClosestEnemy != null) distance[1] *= threatImportClosestEnemy.GetVisibility();
+                }
+                if (distance[0] < distance[1])
+                    {
+                        importClosestEnemy = importEnemyList[i];
+                        if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(__instance)} Assigned {DebugStringHead(importEnemyList[i])} as new closestEnemy. Distance: " + distance[0]);
+                    }
             }
             if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} findClosestEnemy returning {DebugStringHead(importClosestEnemy)}");
             return importClosestEnemy;
