@@ -3,6 +3,8 @@ using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using HarmonyLib;
 using NaturalSelectionLib.Comp;
+using PathfindingLib.API.SmartPathfinding;
+using PathfindingLib.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,7 +28,7 @@ public class NaturalSelectionLib : BaseUnityPlugin
     public static bool usePathfindingLib = false;
     public static ManualLogSource LibraryLogger = new ManualLogSource("NaturalSelectionLib");
     public static Dictionary<Type, List<EnemyAI>> globalEnemyLists = new Dictionary<Type, List<EnemyAI>>();
-    internal static Dictionary<string, PathFindingHandler> pathFindingHandlers = new Dictionary<string, PathFindingHandler>();
+    //internal static Dictionary<string, PathFindingHandler> pathFindingHandlers = new Dictionary<string, PathFindingHandler>();
     public static string ReturnVersion()
     {
         return MyPluginInfo.PLUGIN_VERSION;
@@ -591,11 +593,11 @@ public class NaturalSelectionLib : BaseUnityPlugin
     ////
     public static bool GetPathLengthEnumerator(EnemyAI owner, string Id, Vector3 targetDestination, out float PathLength, out bool validpath)
     {
-        PathLength = -77.777f;
+        PathLength = -1f;
         validpath = false;
-        string jobID = owner.NetworkBehaviourId.ToString() + Id;
+        //string jobID = owner.enemyType.enemyName + owner.NetworkObjectId + Id;
 
-        if (!NaturalSelectionLib.pathFindingHandlers.ContainsKey(jobID))
+        /*if (!NaturalSelectionLib.pathFindingHandlers.ContainsKey(jobID))
         {
             NaturalSelectionLib.pathFindingHandlers.Add(jobID, new PathFindingHandler(owner.agent, targetDestination));
 
@@ -612,7 +614,16 @@ public class NaturalSelectionLib : BaseUnityPlugin
             NaturalSelectionLib.pathFindingHandlers.Remove(jobID);
             return true;
         }
-        return !NaturalSelectionLib.pathFindingHandlers[jobID].isCalculating;
+        return !NaturalSelectionLib.pathFindingHandlers[jobID].isCalculating;*/
+
+        bool result = PathfindingLibHandler.CalculatePathCoroutine(owner.agent, targetDestination, out bool validpathOut, out float PathLengthOut);
+        while (!result)
+        {
+            return false;
+        }
+        PathLength = PathLengthOut;
+        validpath = validpathOut;
+        return true;
     }
 
 

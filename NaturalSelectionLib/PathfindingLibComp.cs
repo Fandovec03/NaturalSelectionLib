@@ -1,6 +1,8 @@
 ﻿using BepInEx.Bootstrap;
+using PathfindingLib.API.SmartPathfinding;
 using PathfindingLib.Jobs;
 using PathfindingLib.Utilities;
+using System;
 using System.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -9,25 +11,33 @@ using UnityEngine.Experimental.AI;
 using static UnityEngine.UI.GridLayoutGroup;
 
 namespace NaturalSelectionLib.Comp;
-public class PathFindingHandler
+public static class PathfindingLibHandler
 {
-    public PathFindingHandler(NavMeshAgent agent, Vector3 targetDestination)
-    {
-        this.agent = agent;
-        this.targetDestination = targetDestination;
-    }
+    //PooledFindPathJob pooledJob = JobPools.GetFindPathJob();
+    //JobHandle previousJobHandle;
+    //public float pathDistance = -1f;
+    //public bool validpath = false;
+    //public bool isCalculating = false;
+    //NavMeshAgent agent;
+    //Vector3 targetDestination;
+    //NavMeshPath path = new NavMeshPath();
 
-    PooledFindPathJob pooledJob = JobPools.GetFindPathJob();
-    JobHandle previousJobHandle;
-    public float pathDistance = -1f;
-    public bool validpath = false;
-    public bool isCalculating = false;
-    NavMeshAgent agent;
-    Vector3 targetDestination;
-    NavMeshPath path = new NavMeshPath();
-
-    public IEnumerator CalculatePathCoroutine()
+    public static bool CalculatePathCoroutine(NavMeshAgent agent, Vector3 targetDestination, out bool validPath, out float pathDistance)
     {
+        validPath = false;
+        pathDistance = -1f;
+        if (!agent.isActiveAndEnabled || !agent.enabled) return false;
+
+        SmartPathTask pathfindingTask = new SmartPathTask();
+        pathfindingTask.StartPathTask(agent, agent.GetPathOrigin(), targetDestination, 0);
+        while (!pathfindingTask.IsResultReady(0))
+        {
+            return false;
+        }
+        pathDistance = pathfindingTask.GetPathLength(0);
+        validPath = pathfindingTask.PathSucceeded(0);
+        return true;
+        /*
         pooledJob.Job.Initialize(agent.GetPathOrigin(), targetDestination, agent);
         previousJobHandle = pooledJob.Job.ScheduleByRef();
         while (pooledJob.Job.GetStatus().GetResult() == PathQueryStatus.InProgress)
@@ -51,6 +61,6 @@ public class PathFindingHandler
             isCalculating = false;
             JobPools.ReleaseFindPathJob(pooledJob);
             yield break;
-        }
+        }*/
     }
 }
