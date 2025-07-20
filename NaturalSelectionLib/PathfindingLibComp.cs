@@ -1,18 +1,12 @@
-﻿using PathfindingLib.Jobs;
+﻿using BepInEx.Bootstrap;
+using PathfindingLib.Jobs;
 using PathfindingLib.Utilities;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Unity.Jobs;
-using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Experimental.AI;
-using UnityEngine.InputSystem.EnhancedTouch;
-using NaturalSelectionLib;
-using BepInEx.Logging;
+using static UnityEngine.UI.GridLayoutGroup;
 
 namespace NaturalSelectionLib.Comp;
 public class PathFindingHandler
@@ -25,11 +19,12 @@ public class PathFindingHandler
 
     PooledFindPathJob pooledJob = JobPools.GetFindPathJob();
     JobHandle previousJobHandle;
-    public float pathDistance = -777.77f;
+    public float pathDistance = -1f;
     public bool validpath = false;
     public bool isCalculating = false;
     NavMeshAgent agent;
     Vector3 targetDestination;
+    NavMeshPath path = new NavMeshPath();
 
     public IEnumerator CalculatePathCoroutine()
     {
@@ -51,7 +46,7 @@ public class PathFindingHandler
         }
         else
         {
-            pathDistance = -777.77f;
+            pathDistance = -1f;
             validpath = false;
             isCalculating = false;
             JobPools.ReleaseFindPathJob(pooledJob);

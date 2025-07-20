@@ -203,45 +203,40 @@ public class NaturalSelectionLib : BaseUnityPlugin
         return tempList;
     }
 
-    public static bool GetPathLength(NavMeshAgent agent, Vector3 targetDestination, out float PathLength)
+    public static bool GetPathLength(NavMeshAgent agent, Vector3 targetDestination, out float PathLength, out bool validPathOut)
     {
         NavMeshPath path = new();
         bool calculatedPath = false;
         bool validpath = false;
         Vector3[] corners = [];
+        PathLength = -1f;
+        validPathOut = false;
 
         if (!agent.enabled || !agent.isActiveAndEnabled)
         {
             LibraryLogger.LogWarning($"Agent is disabled!");
-            PathLength = -777.77f;
+            PathLength = -1f;
             return false;
         }
 
-        if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib"))
+        calculatedPath = agent.CalculatePath(targetDestination, path);
+        validpath = calculatedPath && path.status == NavMeshPathStatus.PathComplete;
+        validPathOut = validpath;
+        corners = path.corners;
+        if (validpath)
         {
-
-        }
-        else
-        {
-            calculatedPath = agent.CalculatePath(targetDestination, path);
-            validpath = calculatedPath && path.status == NavMeshPathStatus.PathComplete;
-            corners = path.corners;
-            if (validpath)
+            float calculatedDistance = 0f;
+            for (int i = 1; i < corners.Length; i++)
             {
-                float calculatedDistance = 0f;
-                for (int i = 1; i < corners.Length; i++)
-                {
-                    float distance = Vector3.Distance(corners[i - 1], corners[i]);
-                    calculatedDistance += distance;
-                }
-                //if (calculatedDistance <= 0f) calculatedDistance = -777.77f;
-                PathLength = calculatedDistance;
-                LibraryLogger.LogMessage($"Found path length: {PathLength}");
-                return true;
+                float distance = Vector3.Distance(corners[i - 1], corners[i]);
+                calculatedDistance += distance;
             }
+            //if (calculatedDistance <= 0f) calculatedDistance = -777.77f;
+            PathLength = calculatedDistance;
+            LibraryLogger.LogMessage($"Found path length: {PathLength}");
+            return true;
         }
-        PathLength = -777.77f;
-        return true;
+        return false;
     }
     public static void GetInsideOrOutsideEnemyList(ref List<EnemyAI> importEnemyList, EnemyAI instance)
     {
@@ -329,15 +324,14 @@ public class NaturalSelectionLib : BaseUnityPlugin
             if (usePathLengthAsDistance && __instance.agent.isActiveAndEnabled)
             {
                 if
-                (
-                GetPathLength(__instance.agent, importEnemyList[i].transform.position, out distance[0]) &&
-                GetPathLength(__instance.agent, importClosestEnemy.transform.position, out distance[1])
-                )
+                (GetPathLength(__instance.agent, importEnemyList[i].transform.position, out distance[0], out bool x) &&
+                GetPathLength(__instance.agent, importClosestEnemy.transform.position, out distance[1], out bool y))
                 {
                     if (distance[0] == distance[1] && distance[0] == -777.77f)
                     {
                         noValidPaths = true;
                     }
+                    LibraryLogger.LogMessage($"Distance[0] = {distance[0]}, Distance[1] = {distance[1]}");
                 }
             }
             if (noValidPaths || !usePathLengthAsDistance)
@@ -636,7 +630,7 @@ public class NaturalSelectionLib : BaseUnityPlugin
                 {
                     if (debugLibrary && debugSpam) LibraryLogger.LogError($"{DebugStringHead(__instance)} {DebugStringHead(importClosestEnemy)} is dead and importEnemyList is empty! Setting importClosestEnemy to null...");
                     //return null;
-                    ReturnOwnerResultPairDelegate?.Invoke(importClosestEnemy);
+                    ReturnOwnerResultPairDelegate?.Invoke(null);
                     yield break;
                 }
                 else
@@ -698,19 +692,41 @@ public class NaturalSelectionLib : BaseUnityPlugin
             if (usePathLengthAsDistance && __instance.agent.isActiveAndEnabled)
             {
                 bool[] validPath = [false, false];
-                while (
-                    !GetPathLengthEnumerator(__instance, "getPathLength1", importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
-                    !GetPathLengthEnumerator(__instance, "getPathLength2", importClosestEnemy.transform.position, out distance[1], out validPath[1]))
+
+                if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib"))
                 {
-                    yield return null;
+                    LibraryLogger.LogMessage("Found Zaggy1024.PathfindingLib");
+                    while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
+                        !GetPathLengthEnumerator(__instance, "getPathLength1", importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
+                        !GetPathLengthEnumerator(__instance, "getPathLength2", importClosestEnemy.transform.position, out distance[1], out validPath[1]))
+                    {
+                        yield return null;
+                    }
+                }
+                else
+                {
+                    LibraryLogger.LogWarning("Zaggy1024.PathfindingLib not found");
+                    while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
+                        !GetPathLength(__instance.agent, importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
+                        !GetPathLength(__instance.agent, importClosestEnemy.transform.position, out distance[1], out validPath[1]))
+                    {
+                        yield return null;
+                    }
                 }
                 {
-                    if (validPath[0] == validPath[1] && distance[0] == -777.77f)
+                    if (validPath[0] == validPath[1] && distance[0] == -1f)
                     {
                         noValidPaths = true;
                     }
+                    LibraryLogger.LogMessage($"(E) Distance[0] = {distance[0]}, Distance[1] = {distance[1]}");
                 }
             }
+
+            if (importClosestEnemy == null || importEnemyList[i] == null)
+            {
+                continue;
+            }
+
             if (noValidPaths || !usePathLengthAsDistance)
             {
                 distance[0] = Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position);
