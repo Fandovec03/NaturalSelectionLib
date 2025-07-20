@@ -23,6 +23,7 @@ public class NaturalSelectionLib : BaseUnityPlugin
 {
     public static bool debugLibrary = false;
     public static bool debugSpam = false;
+    public static bool usePathfindingLib = false;
     public static ManualLogSource LibraryLogger = new ManualLogSource("NaturalSelectionLib");
     public static Dictionary<Type, List<EnemyAI>> globalEnemyLists = new Dictionary<Type, List<EnemyAI>>();
     internal static Dictionary<string, PathFindingHandler> pathFindingHandlers = new Dictionary<string, PathFindingHandler>();
@@ -49,11 +50,12 @@ public class NaturalSelectionLib : BaseUnityPlugin
             if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ updating list for " + instanceType);
         }
     }
-    static public void SetLibraryLoggers(ManualLogSource importLogger, bool spammyLogs = false, bool debuglibrary = false)
+    static public void SetLibraryLoggers(ManualLogSource importLogger, bool spammyLogs = false, bool debuglibrary = false, bool usePathfindinglib = false)
     {
         LibraryLogger = importLogger;
         debugSpam = spammyLogs;
         debugLibrary = debuglibrary;
+        usePathfindingLib = usePathfindinglib;
     }
 
     /// <summary>
@@ -693,7 +695,7 @@ public class NaturalSelectionLib : BaseUnityPlugin
             {
                 bool[] validPath = [false, false];
 
-                if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib"))
+                if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib") && usePathfindingLib)
                 {
                     if (debugLibrary) LibraryLogger.LogMessage("Found Zaggy1024.PathfindingLib");
                     while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
