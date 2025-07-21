@@ -18,30 +18,54 @@ public class NaturalSelectionLib : BaseUnityPlugin
     public static bool debugSpam = false;
     public static bool usePathfindingLib = false;
     public static ManualLogSource LibraryLogger = new ManualLogSource("NaturalSelectionLib");
-    public static Dictionary<Type, List<EnemyAI>> globalEnemyLists = new Dictionary<Type, List<EnemyAI>>();
+    private static Dictionary<Type, List<EnemyAI>> globalEnemyLists = new Dictionary<Type, List<EnemyAI>>();
     public static string ReturnVersion()
     {
         return MyPluginInfo.PLUGIN_VERSION;
     }
 
-    public static void UpdateListInsideDictionrary(Type instanceType, ref List<EnemyAI> list)
+    public static void UpdateEnemyList(Type instanceType, List<EnemyAI> list)
+    {
+        if (globalEnemyLists[instanceType].SequenceEqual(list))
+        {
+            if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ Sequence in " + instanceType + " is equal. Skipping.");
+            return;
+        }
+        globalEnemyLists[instanceType] = list;
+        if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ updating list for " + instanceType);
+    }
+
+    public static void CreateEnemyList(Type instanceType, List<EnemyAI> list)
     {
         if (!globalEnemyLists.ContainsKey(instanceType))
         {
             globalEnemyLists.Add(instanceType, list);
             if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ created new list for " + instanceType);
         }
-        else
+    }
+    public static void DestroyEnemyList(Type instanceType, List<EnemyAI> list)
+    {
+        if (globalEnemyLists.ContainsKey(instanceType))
         {
-            if (globalEnemyLists[instanceType].SequenceEqual(list))
-            {
-                if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ Sequence in " + instanceType + " is equal. Skipping.");
-                return;
-            }
-            globalEnemyLists[instanceType] = list;
-            if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ updating list for " + instanceType);
+            globalEnemyLists.Remove(instanceType);
+            if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ created new list for " + instanceType);
         }
     }
+    public static bool EnemyListContainsKey(Type instanceType)
+    {
+        return globalEnemyLists.ContainsKey(instanceType);
+    }
+
+    public static List<EnemyAI> GetEnemyList(Type instanceType)
+    {
+        return globalEnemyLists[instanceType];
+    }
+
+    public static void ClearAllEnemyLists()
+    {
+        globalEnemyLists.Clear();
+    }
+
     static public void SetLibraryLoggers(ManualLogSource importLogger, bool spammyLogs = false, bool debuglibrary = false, bool usePathfindinglib = false)
     {
         LibraryLogger = importLogger;
