@@ -591,6 +591,9 @@ public class NaturalSelectionLib : BaseUnityPlugin
         return tempDictionary;
     }
     ////
+
+
+    //TODO:Rework
     public static bool GetPathLengthEnumerator(EnemyAI owner, string Id, Vector3 targetDestination, out float PathLength, out bool validpath)
     {
         PathLength = -1f;
@@ -626,8 +629,20 @@ public class NaturalSelectionLib : BaseUnityPlugin
         return true;
     }
 
-
     public static IEnumerator FindClosestEnemyCoroutine(Action<EnemyAI?>? ReturnOwnerResultPairDelegate, List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
+    {
+        if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib") && usePathfindingLib)
+        {
+            return FindClosestEnemyCoroutine1(ReturnOwnerResultPairDelegate, importEnemyList, importClosestEnemy, __instance, useThreatVisibility, usePathLengthAsDistance, includeTheDead);
+        }
+        else
+        {
+            return FindClosestEnemyCoroutine2(ReturnOwnerResultPairDelegate, importEnemyList, importClosestEnemy, __instance, useThreatVisibility, usePathLengthAsDistance, includeTheDead);
+        }    
+    }
+
+
+    public static IEnumerator FindClosestEnemyCoroutine1(Action<EnemyAI?>? ReturnOwnerResultPairDelegate, List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
     {
         foreach (EnemyAI enemy in importEnemyList)
         {
@@ -706,25 +721,137 @@ public class NaturalSelectionLib : BaseUnityPlugin
             {
                 bool[] validPath = [false, false];
 
-                if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib") && usePathfindingLib)
+                while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
+                    !GetPathLength(__instance.agent, importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
+                    !GetPathLength(__instance.agent, importClosestEnemy.transform.position, out distance[1], out validPath[1]))
                 {
-                    if (debugLibrary) LibraryLogger.LogMessage("Found Zaggy1024.PathfindingLib");
-                    while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
-                        !GetPathLengthEnumerator(__instance, "getPathLength1", importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
-                        !GetPathLengthEnumerator(__instance, "getPathLength2", importClosestEnemy.transform.position, out distance[1], out validPath[1]))
+                    yield return null;
+                }
+
+                {
+                    if (validPath[0] == validPath[1] && distance[0] == -1f)
                     {
-                        yield return null;
+                        noValidPaths = true;
                     }
+                    if (debugLibrary) LibraryLogger.LogMessage($"(E) Distance[0] = {distance[0]}, Distance[1] = {distance[1]}");
+                }
+            }
+
+            if (importClosestEnemy == null || importEnemyList[i] == null)
+            {
+                continue;
+            }
+
+            if (noValidPaths || !usePathLengthAsDistance)
+            {
+                distance[0] = Vector3.Distance(__instance.transform.position, importEnemyList[i].transform.position);
+                distance[1] = Vector3.Distance(__instance.transform.position, importClosestEnemy.transform.position);
+            }
+            if (useThreatVisibility)
+            {
+                importEnemyList[i].TryGetComponent<IVisibleThreat>(out IVisibleThreat threatImportEnemyList);
+                importClosestEnemy.TryGetComponent<IVisibleThreat>(out IVisibleThreat threatImportClosestEnemy);
+                if (threatImportEnemyList != null) distance[0] *= threatImportEnemyList.GetVisibility();
+                if (threatImportClosestEnemy != null) distance[1] *= threatImportClosestEnemy.GetVisibility();
+            }
+            if (distance[0] < distance[1])
+            {
+                importClosestEnemy = importEnemyList[i];
+                if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(__instance)} Assigned {DebugStringHead(importEnemyList[i])} as new closestEnemy. Distance: " + distance[0]);
+            }
+        }
+        if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} FindClosestEnemyCoroutine returning {DebugStringHead(importClosestEnemy)}");
+        ReturnOwnerResultPairDelegate?.Invoke(importClosestEnemy);
+    }
+
+    public static IEnumerator FindClosestEnemyCoroutine2(Action<EnemyAI?>? ReturnOwnerResultPairDelegate, List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
+    {
+        bool debugLibrary = NaturalSelectionLib.debugLibrary;
+        bool debugSpam = NaturalSelectionLib.debugSpam;
+        ManualLogSource LibraryLogger = NaturalSelectionLib.LibraryLogger;
+
+        foreach (EnemyAI enemy in importEnemyList)
+        {
+            if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(__instance)}/FindClosestEnemyCoroutine/ item {DebugStringHead(enemy)} inside importEnemyList. IsEnemyDead: {enemy.isEnemyDead}");
+        }
+        if (debugLibrary && importClosestEnemy != null) LibraryLogger.LogInfo($"{DebugStringHead(__instance)}/FindClosestEnemyCoroutine/ {DebugStringHead(importClosestEnemy)} inside importClosestEnemy. IsEnemyDead: {importClosestEnemy.isEnemyDead}");
+        if (importEnemyList.Count < 1)
+        {
+            if (debugLibrary) LibraryLogger.LogWarning($"{DebugStringHead(__instance)}importEnemyList is empty!");
+            if (importClosestEnemy != null && importClosestEnemy.isEnemyDead)
+            {
+                if (!includeTheDead)
+                {
+                    if (debugLibrary && debugSpam) LibraryLogger.LogError($"{DebugStringHead(__instance)} {DebugStringHead(importClosestEnemy)} is dead and importEnemyList is empty! Setting importClosestEnemy to null...");
+                    //return null;
+                    ReturnOwnerResultPairDelegate?.Invoke(null);
+                    yield break;
                 }
                 else
                 {
-                    if (debugLibrary) LibraryLogger.LogWarning("Zaggy1024.PathfindingLib not found");
-                    while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
-                        !GetPathLength(__instance.agent, importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
-                        !GetPathLength(__instance.agent, importClosestEnemy.transform.position, out distance[1], out validPath[1]))
+                    if (debugLibrary && debugSpam) LibraryLogger.LogInfo($"{DebugStringHead(__instance)} {DebugStringHead(importClosestEnemy)} is dead and importEnemyList is empty!");
+                    ReturnOwnerResultPairDelegate?.Invoke(importClosestEnemy);
+                    //return importClosestEnemy;
+                    yield break;
+                }
+            }
+        }
+        for (int i = 0; i < importEnemyList.Count; i++)
+        {
+            if (importClosestEnemy == null)
+            {
+                if (debugLibrary && debugSpam) LibraryLogger.LogInfo($"{DebugStringHead(__instance)} No enemy assigned. Assigning new closestEnemy...");
+
+                for (int j = i; j < importEnemyList.Count; j++)
+                {
+                    if (importEnemyList[j].isEnemyDead && !includeTheDead)
                     {
-                        yield return null;
+                        if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} Found dead enemy. Skipping...");
+                        continue;
                     }
+                    else
+                    {
+                        if (debugLibrary && debugSpam) LibraryLogger.LogInfo($"{DebugStringHead(__instance)} New closestEnemy found!");
+                        importClosestEnemy = importEnemyList[j];
+                        break;
+                    }
+                }
+                continue;
+            }
+            if (importClosestEnemy.isEnemyDead)
+            {
+                if (!includeTheDead)
+                {
+                    if (debugLibrary && debugSpam) LibraryLogger.LogError($"{DebugStringHead(__instance)}, {DebugStringHead(importClosestEnemy)} is dead! Assigning new tempClosestEnemy from importEnemyList...");
+                    importClosestEnemy = importEnemyList[i];
+                    continue;
+                }
+                else
+                {
+                    if (debugLibrary && debugSpam) LibraryLogger.LogInfo($"{DebugStringHead(__instance)} {DebugStringHead(importClosestEnemy)} is dead! The dead enemy will be included. ");
+                }
+            }
+            if (importClosestEnemy == importEnemyList[i])
+            {
+                if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} {DebugStringHead(importEnemyList[i])} is already assigned as closestEnemy");
+                continue;
+            }
+            if (importEnemyList[i] == null)
+            {
+                if (debugLibrary) LibraryLogger.LogError($"{DebugStringHead(__instance)} Enemy not found! Skipping...");
+                continue;
+            }
+            bool noValidPaths = false;
+            float[] distance = [0f, 0f];
+            if (usePathLengthAsDistance && __instance.agent.isActiveAndEnabled)
+            {
+                bool[] validPath = [false, false];
+                
+                while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
+                    !GetPathLengthEnumerator(__instance, "getPathLength1", importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
+                    !GetPathLengthEnumerator(__instance, "getPathLength2", importClosestEnemy.transform.position, out distance[1], out validPath[1]))
+                {
+                    yield return null;
                 }
                 {
                     if (validPath[0] == validPath[1] && distance[0] == -1f)

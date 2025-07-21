@@ -1,9 +1,11 @@
 ﻿using BepInEx.Bootstrap;
+using BepInEx.Logging;
 using PathfindingLib.API.SmartPathfinding;
 using PathfindingLib.Jobs;
 using PathfindingLib.Utilities;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.AI;
@@ -21,6 +23,7 @@ public static class PathfindingLibHandler
     //NavMeshAgent agent;
     //Vector3 targetDestination;
     //NavMeshPath path = new NavMeshPath();
+
 
     public static bool CalculatePathCoroutine(NavMeshAgent agent, Vector3 targetDestination, out bool validPath, out float pathDistance)
     {
