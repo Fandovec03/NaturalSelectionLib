@@ -1,21 +1,12 @@
 ﻿using BepInEx;
-using BepInEx.Bootstrap;
 using BepInEx.Logging;
-using HarmonyLib;
-using NaturalSelectionLib.Comp;
-using PathfindingLib.API.SmartPathfinding;
-using PathfindingLib.Utilities;
+using NaturalSelectionLib.Tools;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.UIElements;
-//using PathfindingLib.Jobs;
-//using PathfindingLib.Utilities;
-//using UnityEngine.Experimental.AI;
-//using Unity.Jobs;
 
 namespace NaturalSelectionLib;
 
@@ -28,7 +19,6 @@ public class NaturalSelectionLib : BaseUnityPlugin
     public static bool usePathfindingLib = false;
     public static ManualLogSource LibraryLogger = new ManualLogSource("NaturalSelectionLib");
     public static Dictionary<Type, List<EnemyAI>> globalEnemyLists = new Dictionary<Type, List<EnemyAI>>();
-    //internal static Dictionary<string, PathFindingHandler> pathFindingHandlers = new Dictionary<string, PathFindingHandler>();
     public static string ReturnVersion()
     {
         return MyPluginInfo.PLUGIN_VERSION;
@@ -591,43 +581,8 @@ public class NaturalSelectionLib : BaseUnityPlugin
         return tempDictionary;
     }
     ////
-    public static bool GetPathLengthEnumerator(EnemyAI owner, string Id, Vector3 targetDestination, out float PathLength, out bool validpath)
-    {
-        PathLength = -1f;
-        validpath = false;
-        //string jobID = owner.enemyType.enemyName + owner.NetworkObjectId + Id;
 
-        /*if (!NaturalSelectionLib.pathFindingHandlers.ContainsKey(jobID))
-        {
-            NaturalSelectionLib.pathFindingHandlers.Add(jobID, new PathFindingHandler(owner.agent, targetDestination));
-
-            if (NaturalSelectionLib.pathFindingHandlers[jobID].CalculatePathCoroutine == null)
-            {
-                owner.StartCoroutine(NaturalSelectionLib.pathFindingHandlers[jobID].CalculatePathCoroutine());
-            }
-        }
-        else if (!NaturalSelectionLib.pathFindingHandlers[jobID].isCalculating)
-        {
-            PathLength = NaturalSelectionLib.pathFindingHandlers[jobID].pathDistance;
-            validpath = NaturalSelectionLib.pathFindingHandlers[jobID].validpath;
-
-            NaturalSelectionLib.pathFindingHandlers.Remove(jobID);
-            return true;
-        }
-        return !NaturalSelectionLib.pathFindingHandlers[jobID].isCalculating;*/
-
-        bool result = PathfindingLibHandler.CalculatePathCoroutine(owner.agent, targetDestination, out bool validpathOut, out float PathLengthOut);
-        while (!result)
-        {
-            return false;
-        }
-        PathLength = PathLengthOut;
-        validpath = validpathOut;
-        return true;
-    }
-
-
-    public static IEnumerator FindClosestEnemyCoroutine(Action<EnemyAI?>? ReturnOwnerResultPairDelegate, List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
+    public static IEnumerator FindClosestEnemy(Action<EnemyAI?>? ReturnOwnerResultPairDelegate, List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
     {
         foreach (EnemyAI enemy in importEnemyList)
         {
@@ -706,26 +661,13 @@ public class NaturalSelectionLib : BaseUnityPlugin
             {
                 bool[] validPath = [false, false];
 
-                if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib") && usePathfindingLib)
+                PathfindingCalculator calculator = PathfindingCalculator.Create(__instance, [importEnemyList[i].transform.position, importClosestEnemy.transform.position]);
+
+                while (!calculator.CalculationnStatus(0, out distance[0], out validPath[0]) && !calculator.CalculationnStatus(1, out distance[1], out validPath[1]))
                 {
-                    if (debugLibrary) LibraryLogger.LogMessage("Found Zaggy1024.PathfindingLib");
-                    while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
-                        !GetPathLengthEnumerator(__instance, "getPathLength1", importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
-                        !GetPathLengthEnumerator(__instance, "getPathLength2", importClosestEnemy.transform.position, out distance[1], out validPath[1]))
-                    {
-                        yield return null;
-                    }
+                    yield return null;
                 }
-                else
-                {
-                    if (debugLibrary) LibraryLogger.LogWarning("Zaggy1024.PathfindingLib not found");
-                    while (importClosestEnemy != null && importEnemyList[i] != null && __instance.agent.enabled && __instance.agent.isActiveAndEnabled &&
-                        !GetPathLength(__instance.agent, importEnemyList[i].transform.position, out distance[0], out validPath[0]) &&
-                        !GetPathLength(__instance.agent, importClosestEnemy.transform.position, out distance[1], out validPath[1]))
-                    {
-                        yield return null;
-                    }
-                }
+
                 {
                     if (validPath[0] == validPath[1] && distance[0] == -1f)
                     {

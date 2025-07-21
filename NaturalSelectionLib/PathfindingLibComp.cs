@@ -1,66 +1,46 @@
-﻿using BepInEx.Bootstrap;
+﻿using NaturalSelectionLib.Tools;
 using PathfindingLib.API.SmartPathfinding;
-using PathfindingLib.Jobs;
 using PathfindingLib.Utilities;
-using System;
-using System.Collections;
-using Unity.Jobs;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.Experimental.AI;
-using static UnityEngine.UI.GridLayoutGroup;
 
-namespace NaturalSelectionLib.Comp;
-public static class PathfindingLibHandler
+namespace NaturalSelectionLib.Comp
 {
-    //PooledFindPathJob pooledJob = JobPools.GetFindPathJob();
-    //JobHandle previousJobHandle;
-    //public float pathDistance = -1f;
-    //public bool validpath = false;
-    //public bool isCalculating = false;
-    //NavMeshAgent agent;
-    //Vector3 targetDestination;
-    //NavMeshPath path = new NavMeshPath();
 
-    public static bool CalculatePathCoroutine(NavMeshAgent agent, Vector3 targetDestination, out bool validPath, out float pathDistance)
+    static class PathfindingLibHelper
     {
-        validPath = false;
-        pathDistance = -1f;
-        if (!agent.isActiveAndEnabled || !agent.enabled) return false;
+        public static PathfindingCalculatorAsyncPathfindingLib ReturnPathfindingLibalculator(EnemyAI instance, List<Vector3> destinations)
+        {
+            return new PathfindingCalculatorAsyncPathfindingLib(instance, destinations);
+        }
+    }
 
+    class PathfindingCalculatorAsyncPathfindingLib : PathfindingCalculator
+    {
         SmartPathTask pathfindingTask = new SmartPathTask();
-        pathfindingTask.StartPathTask(agent, agent.GetPathOrigin(), targetDestination, 0);
-        while (!pathfindingTask.IsResultReady(0))
+        internal PathfindingCalculatorAsyncPathfindingLib(EnemyAI instance, List<Vector3> destinations)
         {
-            return false;
+            pathfindingTask.StartPathTask(instance.agent, instance.agent.GetPathOrigin(), destinations, 0);
         }
-        pathDistance = pathfindingTask.GetPathLength(0);
-        validPath = pathfindingTask.PathSucceeded(0);
-        return true;
-        /*
-        pooledJob.Job.Initialize(agent.GetPathOrigin(), targetDestination, agent);
-        previousJobHandle = pooledJob.Job.ScheduleByRef();
-        while (pooledJob.Job.GetStatus().GetResult() == PathQueryStatus.InProgress)
+        public override bool CalculationnStatus(int index, out float pathLengthResult, out bool validPath)
         {
-            isCalculating = true;
-            yield return null;
+            pathLengthResult = -1f;
+            validPath = false;
+            if (!pathfindingTask.IsResultReady(index)) return true;
+
+            if (pathfindingTask.PathSucceeded(index))
+            {
+                pathLengthResult = pathfindingTask.GetPathLength(index);
+                validPath = pathfindingTask.PathSucceeded(index);
+                return true;
+            }
+            return true;
         }
 
-        if (pooledJob.Job.GetStatus().GetResult() == PathQueryStatus.Success)
+        public override void Dispose()
         {
-            pathDistance = pooledJob.Job.GetPathLength();
-            validpath = true;
-            isCalculating = false;
-            JobPools.ReleaseFindPathJob(pooledJob);
-            yield break;
+            base.Dispose();
+            pathfindingTask.Dispose();
         }
-        else
-        {
-            pathDistance = -1f;
-            validpath = false;
-            isCalculating = false;
-            JobPools.ReleaseFindPathJob(pooledJob);
-            yield break;
-        }*/
     }
 }
