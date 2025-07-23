@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -268,7 +269,7 @@ public class NaturalSelectionLib : BaseUnityPlugin
         }
     }
 
-    public static EnemyAI? FindClosestEnemy(ref List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
+    public static EnemyAI? FindClosestEnemy(ref List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, int maxIterations = 6, bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
     {
         foreach (EnemyAI enemy in importEnemyList)
         {
@@ -292,7 +293,11 @@ public class NaturalSelectionLib : BaseUnityPlugin
                 }
             }
         }
-        for (int i = 0; i < importEnemyList.Count; i++)
+        importEnemyList.OrderBy(x => Vector3.Distance(__instance.transform.position, x.transform.position));
+        int iterations = importEnemyList.Count;
+        if (iterations > maxIterations) iterations = maxIterations;
+
+        for (int i = 0; i < iterations; i++)
         {
             if (importClosestEnemy == null)
             {
@@ -594,7 +599,7 @@ public class NaturalSelectionLib : BaseUnityPlugin
         if (tempDictionary.Count > 1)
         {
             tempDictionary.OrderBy(value => tempDictionary.Values).Reverse();
-            if (debugLibrary)
+            if (debugLibrary)ing
             {
                 foreach (KeyValuePair<EnemyAI, float> enemy in tempDictionary)
                 {
@@ -604,9 +609,10 @@ public class NaturalSelectionLib : BaseUnityPlugin
         }
         return tempDictionary;
     }
+
     ////
 
-    public static IEnumerator FindClosestEnemy(Action<EnemyAI?>? ReturnOwnerResultPairDelegate, List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
+    public static IEnumerator FindClosestEnemy(Action<EnemyAI?>? ReturnOwnerResultPairDelegate, List<EnemyAI> importEnemyList, EnemyAI? importClosestEnemy, EnemyAI __instance, int maxIterations = 6,bool useThreatVisibility = true, bool usePathLengthAsDistance = false, bool includeTheDead = false)
     {
         foreach (EnemyAI enemy in importEnemyList)
         {
@@ -634,7 +640,12 @@ public class NaturalSelectionLib : BaseUnityPlugin
                 }
             }
         }
-        for (int i = 0; i < importEnemyList.Count; i++)
+
+        importEnemyList.OrderBy(x => Vector3.Distance(__instance.transform.position, x.transform.position));
+        int iterations = importEnemyList.Count;
+        if (iterations > maxIterations) iterations = maxIterations;
+        
+        for (int i = 0; i < iterations; i++)
         {
             if (importClosestEnemy == null)
             {
