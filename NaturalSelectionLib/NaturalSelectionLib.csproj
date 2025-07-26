@@ -5,7 +5,7 @@
         <AssemblyName>fandovec03.NaturalSelectionLib</AssemblyName>
         <Product>NaturalSelectionLib</Product>
         <!-- Change to whatever version you're currently on. -->
-        <Version>0.7.0</Version>
+        <Version>0.8.0</Version>
     </PropertyGroup>
 
     <!-- Project Properties -->
@@ -66,6 +66,12 @@
 
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="PathfindingLib">
+        <HintPath>Dependencies\PathfindingLib.dll</HintPath>
+      </Reference>
     </ItemGroup>
     <ItemGroup>
       <None Update="NuGetIcon.png">
