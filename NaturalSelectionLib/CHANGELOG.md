@@ -1,3 +1,24 @@
+# 0.8.0
+
+## Major changes
+- **Added PathfindingLib compatibility**
+- globalEnemyLists privatized
+	- Methods are now used to work with the dictionary
+- Added IEnumerator version of FindClosestEnemy
+
+### FindClosestEnemy
+- Added parameter to toggle use of pathfinding to determine the closest enemy
+- Added parameter to toggle to take ThreatVisibility into account
+- Changed how closest enemy is determined
+	- Enemy list is first sorted by distance and then iterated over set amount of elements
+	- Added parameter to set maximun number of iterations
+
+### DebugStringHead
+- Added support for more objects
+
+- Fixed some bugs
+
+
 ## 0.7.1
 - Updated DebugStringHead
 	- The method accepts and supports multiple types of the source

@@ -11,7 +11,7 @@ internal abstract class PathfindingCalculator : IDisposable
 {
     internal static PathfindingCalculator Create(EnemyAI instance, List<Vector3> destinations)
     {
-        if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib") && !NaturalSelectionLib.usePathfindingLib)
+        if (Chainloader.PluginInfos.ContainsKey("Zaggy1024.PathfindingLib") && !Library.usePathfindingLib)
         {
             return PathfindingLibHelper.ReturnPathfindingLibalculator(instance, destinations);
         }

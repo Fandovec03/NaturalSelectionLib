@@ -13,7 +13,7 @@ namespace NaturalSelectionLib;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInDependency("Zaggy1024.PathfindingLib", BepInDependency.DependencyFlags.SoftDependency)]
-public class NaturalSelectionLib : BaseUnityPlugin
+public class Library : BaseUnityPlugin
 {
     public static bool debugLibrary = false;
     public static bool debugSpam = false;
@@ -27,6 +27,12 @@ public class NaturalSelectionLib : BaseUnityPlugin
 
     public static void UpdateEnemyList(Type instanceType, List<EnemyAI> list)
     {
+        if (!globalEnemyLists.ContainsKey(instanceType))
+        {
+            LibraryLogger.LogError($"EnemyLists does not contain {instanceType}!");
+            CreateEnemyList(instanceType, list);
+            return;
+        }
         if (globalEnemyLists[instanceType].SequenceEqual(list))
         {
             if (debugSpam && debugLibrary) LibraryLogger.LogInfo("/updateListInsideDictionary/ Sequence in " + instanceType + " is equal. Skipping.");
@@ -74,6 +80,14 @@ public class NaturalSelectionLib : BaseUnityPlugin
         debugLibrary = debuglibrary;
         usePathfindingLib = usePathfindinglib;
     }
+}
+
+public class LibraryMethods
+{
+    public static bool debugLibrary = Library.debugLibrary;
+    public static bool debugSpam = Library.debugSpam;
+    public static bool usePathfindingLib = Library.usePathfindingLib;
+    public static ManualLogSource LibraryLogger = Library.LibraryLogger;
 
     /// <summary>
     /// Returns head with the name, IDs and additional variables of the source or the value of the source.
@@ -108,6 +122,22 @@ public class NaturalSelectionLib : BaseUnityPlugin
                 GrabbableObject grabbable = (GrabbableObject)source;
                 tempString = $"{grabbable.itemProperties.itemName}, ID: {grabbable.NetworkObjectId}";
                 if (!shortFormat) tempString = $"{grabbable.itemProperties.itemName}|ID: {grabbable.NetworkObjectId}|ItemID: {grabbable.itemProperties.itemId}";
+            }
+            else if (source is GameObject)
+            {
+                if (((GameObject)source).TryGetComponent(out EnemyAI ComponentEnemy))
+                {
+                    return DebugStringHead(ComponentEnemy, shortFormat);
+                }
+                if (((GameObject)source).TryGetComponent(out SandSpiderWebTrap ComponentSpiderWeb))
+                {
+                    return DebugStringHead(ComponentSpiderWeb, shortFormat);
+                }
+                if (((GameObject)source).TryGetComponent(out GrabbableObject ComponentObject))
+                {
+                    return DebugStringHead(ComponentObject, shortFormat);
+                }
+                tempString = ((GameObject)source).name;
             }
             else if (source is string) tempString = (string)source;
             else tempString = "Unknown source";
@@ -599,7 +629,7 @@ public class NaturalSelectionLib : BaseUnityPlugin
         if (tempDictionary.Count > 1)
         {
             tempDictionary.OrderBy(value => tempDictionary.Values).Reverse();
-            if (debugLibrary)ing
+            if (debugLibrary)
             {
                 foreach (KeyValuePair<EnemyAI, float> enemy in tempDictionary)
                 {
@@ -692,7 +722,7 @@ public class NaturalSelectionLib : BaseUnityPlugin
             }
             bool noValidPaths = false;
             float[] distance = [0f, 0f];
-            if (usePathLengthAsDistance && __instance.agent.isActiveAndEnabled)
+            if (__instance is EnemyAI && usePathLengthAsDistance)
             {
                 bool[] validPath = [false, false];
 
