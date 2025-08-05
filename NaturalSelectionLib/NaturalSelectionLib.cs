@@ -139,6 +139,7 @@ public class LibraryMethods
                 }
                 tempString = ((GameObject)source).name;
             }
+            else if (source is Item) tempString = $"{((Item)source).itemName}, ID: {((Item)source).itemId}";
             else if (source is string) tempString = (string)source;
             else tempString = "Unknown source";
 
