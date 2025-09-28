@@ -79,15 +79,19 @@ public class Library : BaseUnityPlugin
         debugSpam = spammyLogs;
         debugLibrary = debuglibrary;
         usePathfindingLib = usePathfindinglib;
+        LibraryMethods.LibraryLogger = importLogger;
+        LibraryMethods.debugLibrary = debuglibrary;
+        LibraryMethods.debugSpam = spammyLogs;
+        LibraryMethods.usePathfindingLib = usePathfindinglib;
     }
 }
 
 public class LibraryMethods
 {
-    public static bool debugLibrary = Library.debugLibrary;
-    public static bool debugSpam = Library.debugSpam;
-    public static bool usePathfindingLib = Library.usePathfindingLib;
-    public static ManualLogSource LibraryLogger = Library.LibraryLogger;
+    public static bool debugLibrary = false;
+    public static bool debugSpam = false;
+    public static bool usePathfindingLib = false;
+    public static ManualLogSource LibraryLogger = new ManualLogSource("NaturalSelectionLib");
 
     /// <summary>
     /// Returns head with the name, IDs and additional variables of the source or the value of the source.
