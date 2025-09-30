@@ -1,3 +1,6 @@
+# 0.8.2
+- Small changes to initializing variables
+
 # 0.8.1
 - DebugStringHead now supports type Item
 
