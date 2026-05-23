@@ -413,7 +413,7 @@ public class LibraryMethods
         if (debugLibrary && debugSpam) LibraryLogger.LogWarning($"{DebugStringHead(__instance)} findClosestEnemy returning {DebugStringHead(importClosestEnemy)}");
         return importClosestEnemy;
     }
-    public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, List<string>? blacklist, EnemyAI instance, bool filterOutImmortal = true, bool filterTheSameType = true)
+    public static void FilterEnemyList(ref List<EnemyAI> importEnemyList, List<string>? blacklist, EnemyAI instance, bool filterOutImmortal = true, bool filterTheSameType = true, bool filterOutTheDead = true)
     {
         List<EnemyAI> tempList = new List<EnemyAI>(importEnemyList);
         for (int i = 0; i < tempList.Count; i++)
@@ -453,6 +453,12 @@ public class LibraryMethods
             if (filterOutImmortal && !tempList[i].enemyType.canDie)
             {
                 if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out immortal Enemy of type {tempList[i].GetType()}");
+                importEnemyList.Remove(tempList[i]);
+                continue;
+            }
+            if (filterOutTheDead && tempList[i].isEnemyDead)
+            {
+                if (debugLibrary) LibraryLogger.LogInfo($"{DebugStringHead(instance)} Caught and filtered out dead Enemy of type {tempList[i].GetType()}");
                 importEnemyList.Remove(tempList[i]);
                 continue;
             }
